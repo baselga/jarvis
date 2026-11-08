@@ -22,6 +22,7 @@ Argumentos: `N` (empezar la fase N) o `cerrar N` (cerrar la fase N).
    - Decisiones tomadas, con una línea de porqué.
    - Qué tests lleva cada tarea (obligatorios en auth, roles, permisos y herramientas del asistente).
    - Criterio de terminado de la fase.
+   Si la entrevista ha definido o cambiado entidades, campos, roles o reglas de permisos, créalo o actualízalo en `docs/dominio.md` (glosario del hogar: miembros y roles, entidades con sus campos y reglas, en lenguaje de casa, no de código).
    Muéstrame un resumen corto y **espera mi confirmación**. No escribas código antes.
 4. **Implementación.** Tarea a tarea:
    - Implementa, verifica con `pnpm -r typecheck` y los tests afectados, y muestra solo errores.
@@ -37,5 +38,5 @@ Argumentos: `N` (empezar la fase N) o `cerrar N` (cerrar la fase N).
    - Comandos nuevos o cambios en `CLAUDE.md`.
    - Pendientes y deuda técnica conocida.
    - Conceptos de backend aprendidos en la fase, en una lista breve.
-3. Actualiza la sección de comandos de `CLAUDE.md` si han cambiado.
+3. Actualiza la sección de comandos de `CLAUDE.md` si han cambiado, y el `CLAUDE.md` de cada app tocada si han aparecido convenciones o patrones nuevos (o crea el de una app nueva). Comprueba que `docs/dominio.md` refleja lo construido.
 4. Propón el mensaje de commit y recuérdame hacer `/clear` antes de la siguiente fase.

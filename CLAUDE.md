@@ -31,6 +31,17 @@ packages/api-client/ Cliente tipado de la API.
 voice/             (fase 5) satélite de voz en Python.
 ```
 
+Hoy solo existen `apps/api` y `packages/schemas`; el resto se crea en su fase. Cada app tiene su propio `CLAUDE.md` con sus convenciones. Glosario del hogar (miembros, roles, entidades): `docs/dominio.md` (desde la fase 1).
+
+### Añadir una app o paquete al monorepo
+
+Nada avisa si se olvida alguno de estos pasos:
+
+1. Dependencia interna con `"@jarvis/x": "workspace:*"`; si es un paquete, `exports` con la condición `development` apuntando a `src/` (como `packages/schemas`).
+2. `COPY <ruta>/package.json <ruta>/` en la etapa `deps` de cada `Dockerfile` que lo use.
+3. Volumen anónimo `/app/<ruta>/node_modules` en el servicio de `docker-compose.yml`.
+4. Un `CLAUDE.md` en la carpeta de la app con sus convenciones.
+
 ## Reglas de arquitectura
 
 - Los tipos salen de `packages/schemas`; no dupliques tipos a mano en apps.
@@ -45,7 +56,6 @@ Obligatorios en: autenticación y roles, permisos por endpoint (p. ej. un invita
 
 ## Comandos
 
-<!-- Completar en la fase 0 con los reales -->
 - `docker compose up -d` — levanta todo
 - `docker compose up -d --build -V` — tras cambiar dependencias
 - `pnpm format` — Prettier

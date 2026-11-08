@@ -1,6 +1,6 @@
 # Jarvis — Objetivos, arquitectura y fases
 
-Nov 7, 2026 · @Someone
+Nov 7, 2026 · Daniel
 
 Jarvis es un asistente virtual tipo Alexa, conectado a una IA, que conoce los datos de nuestra casa (biblioteca, lista de la compra, tareas, recetas) y recuerda las conversaciones con cada miembro de la familia. Se aloja en un servidor propio en casa.
 
