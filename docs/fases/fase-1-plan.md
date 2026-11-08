@@ -26,7 +26,7 @@ Tres bloques, cada uno usable y revisable por separado: **1a** auth y usuarios, 
 ### 1a — Auth, usuarios y roles
 
 1. [ ] **Migraciones y tablas de usuarios:** `drizzle-kit`, scripts `db:generate`/`db:migrate`, tablas `users` (nombre, email, hash, rol, activo) y `sessions`; migrar al arrancar en dev.
-2. [ ] **Infra de tests con BD:** BD `jarvis_test` (script de inicio de Postgres), *setup* de Vitest que migra y helper para vaciar tablas y crear usuarios/sesiones de prueba.
+2. [ ] **Infra de tests con BD:** BD `jarvis_test` (script de inicio de Postgres), *setup* de Vitest que migra y helper para vaciar tablas y crear usuarios/sesiones de prueba. Documentar en la sección "Comandos" del `CLAUDE.md` raíz cómo se ejecutan los tests (host o contenedor, `DATABASE_URL` de test).
 3. [ ] **OpenAPI:** type provider de Zod, `@fastify/swagger` + UI en `/docs`, `/health` migrado al nuevo patrón.
 4. [ ] **Contraseñas y seed:** helper de hash/verificación con argon2 y script `db:seed` que crea el admin desde `.env` si no existe. Tests: hash y verificación.
 5. [ ] **Login, logout y `/auth/me`:** crear sesión, cookie, expiración y renovación, cierre de sesión. Tests: credenciales malas → 401, usuario desactivado → 401, sesión caducada → 401, logout invalida el token, Bearer y cookie funcionan.

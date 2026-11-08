@@ -4,10 +4,13 @@ Asistente doméstico tipo Alexa con IA, alojado en un servidor en casa. Proyecto
 
 Objetivos, arquitectura y fases completos: `docs/PLAN.md` (léelo solo al empezar una fase, no en cada tarea).
 Estado del proyecto: `docs/fases/fase-N.md` (un resumen por fase terminada).
+Fase activa: 1 (plan: `docs/fases/fase-1-plan.md`)
 
 ## Forma de trabajar
 
-- Cada fase empieza con `/fase N`: entrevista → resumen → mi confirmación → implementación. No implementes nada de una fase sin ese acuerdo.
+- Cada fase empieza con `/jarvis-phase N`: entrevista → resumen → mi confirmación → plan de tareas. No implementes nada de una fase sin ese acuerdo.
+- Cada tarea del plan pasa por `/jarvis-spec N` → `/jarvis-implement N` → `/jarvis-review N` → `/jarvis-finish N`, en sesiones separadas que se comunican por `docs/fases/fase-F/tarea-N.md`. Commit al terminar cada tarea, antes de la siguiente.
+- No hagas commits salvo que te lo pida expresamente; como mucho, propón el mensaje.
 - Estoy aprendiendo backend (vengo de front con React + Vite): explica el porqué de las decisiones importantes, de forma breve. Las explicaciones largas van al resumen de la fase, no en cada cambio.
 - Tareas pequeñas y revisables. Si una tarea crece, para y propón dividirla.
 - Responde en español.
