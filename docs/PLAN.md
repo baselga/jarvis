@@ -91,7 +91,7 @@ El proyecto avanza en siete fases; cada una deja algo usable en casa, y la parte
 | Fase | Alcance | Terminada cuando… |
 | --- | --- | --- |
 | 0. Esqueleto | Monorepo con pnpm, configuración TypeScript compartida, Docker Compose con PostgreSQL, API mínima con endpoint de salud. | `docker compose up` levanta la API y la base de datos, y `/health` responde. |
-| 1. API hogar y gestión | Modelo de datos (usuarios y roles, libros, compra, tareas, recetas), autenticación, CRUD con OpenAPI, sección `/gestion` de la web. | Puedo iniciar sesión y gestionar todos los datos desde la web. |
+| 1. API hogar y gestión | Usuarios y roles, autenticación, biblioteca (libros, autores, géneros, sagas, préstamos y lecturas) con CRUD y OpenAPI, sección `/gestion` de la web. Compra, tareas y recetas, en fases futuras. | Puedo iniciar sesión y gestionar la biblioteca y los usuarios desde la web. |
 | 2. Asistente por chat | Servicio `assistant`, LLM con tool calling sobre la API, sección `/chat` con respuestas en streaming. | "Añade leche a la lista de la compra" desde el chat aparece en la lista, y un invitado no puede borrar datos. |
 | 3. Despliegue en casa | Elegir el servidor, Caddy, acceso remoto seguro (Tailscale o Cloudflare Tunnel), copias de seguridad automáticas de la base de datos. | Uso el asistente desde el móvil fuera de casa y hay backups diarios. |
 | 4. Memoria | Guardar conversaciones por usuario, resumirlas en hechos persistentes y pasárselos al modelo; pgvector si hace falta. | El asistente recuerda algo de una conversación anterior y no mezcla lo de un usuario con otro. |
