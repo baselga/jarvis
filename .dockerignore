@@ -1,0 +1,15 @@
+# No se copian a la imagen: se instalan/generan dentro.
+**/node_modules
+**/dist
+**/coverage
+*.tsbuildinfo
+
+# Secretos y cosas que la imagen no necesita
+.env
+.env.*
+!.env.example
+.git
+.claude
+docs
+*.log
+.DS_Store

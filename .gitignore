@@ -1,0 +1,16 @@
+# Dependencias
+node_modules/
+
+# Builds
+dist/
+*.tsbuildinfo
+coverage/
+
+# Secretos (solo se versiona la plantilla)
+.env
+.env.*
+!.env.example
+
+# Varios
+*.log
+.DS_Store

@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      # Postgres 18 guarda los datos en un subdirectorio versionado de esta ruta.
+      - postgres-data:/var/lib/postgresql
+    ports:
+      # Solo accesible desde esta máquina (para clientes de BD y migraciones).
+      - '127.0.0.1:5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: dev
+    restart: unless-stopped
+    environment:
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      # "postgres" es el nombre del servicio: la red de Compose lo resuelve.
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    ports:
+      - '3000:3000'
+    volumes:
+      # Código del host montado para que `tsx watch` recargue al guardar.
+      - .:/app
+      # Los node_modules se quedan los de la imagen (compilados para Linux),
+      # no los del host. Tras cambiar dependencias: `docker compose up -d --build -V`.
+      - /app/node_modules
+      - /app/apps/api/node_modules
+      - /app/packages/schemas/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres-data:

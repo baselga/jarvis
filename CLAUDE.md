@@ -47,6 +47,8 @@ Obligatorios en: autenticación y roles, permisos por endpoint (p. ej. un invita
 
 <!-- Completar en la fase 0 con los reales -->
 - `docker compose up -d` — levanta todo
+- `docker compose up -d --build -V` — tras cambiar dependencias
+- `pnpm format` — Prettier
 - `pnpm -r typecheck` — tipos
 - `pnpm -r test` — tests
 - `pnpm -r lint` — lint
