@@ -1,17 +1,19 @@
 ---
 name: jarvis-spec
-description: Paso 1 de 4 de una tarea en Jarvis. Usar con `/jarvis-spec N` para analizar la tarea N de la fase activa, resolver dudas conmigo y escribir su archivo de especificación (dividiéndola en subtareas si es grande).
-argument-hint: "N"
+description: Paso 1 de 4 de una tarea en Jarvis. Usar con `/jarvis-spec [N]` para analizar la tarea N de la fase activa (por defecto, la primera pendiente del plan), resolver dudas conmigo y escribir su archivo de especificación (dividiéndola en subtareas si es grande).
+argument-hint: "[N]"
 disable-model-invocation: true
 ---
 
 # /jarvis-spec — analizar la tarea y escribir su especificación
 
 Flujo de una tarea, cada paso en una sesión limpia (`/clear` entre ellos), comunicados solo por el archivo de la tarea:
-`/jarvis-spec N` → `/jarvis-implement N` → `/jarvis-review N` → `/jarvis-finish N`.
+`/jarvis-spec` → `/jarvis-implement` → `/jarvis-review` → `/jarvis-finish`. Sin argumento, los tres últimos usan la `Tarea activa` del `CLAUDE.md` raíz.
 
 **Fase activa (F):** la de la línea `Fase activa` del `CLAUDE.md` raíz. Si dice que no hay ninguna, dímelo y para.
-**Archivo de la tarea:** `docs/fases/fase-F/tarea-N.md`.
+**Tarea (N):** el argumento si lo paso; si no, la primera tarea sin `[x]` de `fase-F-plan.md`. Dime cuál vas a especificar. Si la línea `Tarea activa` del `CLAUDE.md` raíz apunta a otra tarea sin terminar, avísame y pregúntame antes de seguir.
+**Rama:** si la rama actual tiene la forma `feature/F-N` y no coincide con F y N, avísame (no bloquea).
+**Archivo de la tarea:** `docs/fases/fase-F/tarea-N.md`. Su cabecera es una tabla `| Campo | Valor |` (`Estado`, `Tamaño`, `Fase`, `Plan`); para cambiar un campo, edita solo su fila.
 **Estados:** `especificada` → `en curso` → `implementada` → `revisada` → `terminada`.
 
 No escribas código en este paso.
@@ -21,7 +23,7 @@ No escribas código en este paso.
 1. **Comprobaciones previas.** Avísame y pregúntame si seguimos cuando:
    - `git status` no está limpio: probablemente falta commitear la tarea anterior, y su código se mezclaría con el de esta en la revisión.
    - Alguna tarea anterior del plan no está marcada `[x]`: la especificación se basaría en código que aún no existe.
-   Si `tarea-N.md` ya existe: en `especificada`, léelo y pregúntame si lo rehacemos o lo completamos; en cualquier otro estado, no lo toques y dime qué paso toca.
+   Si `tarea-N.md` ya existe: con `Estado` `especificada`, léelo y pregúntame si lo rehacemos o lo completamos; en cualquier otro estado, no lo toques y dime qué paso toca.
 2. **Contexto mínimo.** Lee:
    - La tarea N, las decisiones y la sección "Notas" (si existe) de `fase-F-plan.md`. Lo que el plan decide manda sobre secciones antiguas de los `CLAUDE.md` (p. ej. "Pendiente de decidir").
    - `docs/dominio.md` si la tarea toca entidades, roles o permisos.
@@ -32,18 +34,21 @@ No escribas código en este paso.
    - Si una decisión es buena para aprender backend, explica brevemente las opciones.
    - No preguntes lo que ya decide el plan de la fase o el `CLAUDE.md`.
 4. **Tamaño.** Divide en subtareas (`N.1`, `N.2`…) si la tarea toca más de ~8 archivos, mezcla conceptos nuevos independientes o no se podría revisar de una sentada. Cada subtarea debe dejar el proyecto compilando y con los tests en verde.
-   Propón `Tamaño: pequeña` si tiene una sola subtarea, toca ~3 archivos o menos, no lleva tests obligatorios (auth, roles, permisos, herramientas del asistente) y no tiene conceptos nuevos. Si no, `Tamaño: normal`. Una tarea pequeña se salta dos `/clear` (ver paso 6, `/jarvis-review` y `/jarvis-finish`); la revisión sigue siendo en sesión limpia.
+   Propón `Tamaño` `pequeña` si tiene una sola subtarea, toca ~3 archivos o menos, no lleva tests obligatorios (auth, roles, permisos, herramientas del asistente) y no tiene conceptos nuevos. Si no, `normal`. Una tarea pequeña se salta dos `/clear` (ver paso 6, `/jarvis-review` y `/jarvis-finish`); la revisión sigue siendo en sesión limpia.
 5. **Escribe `tarea-N.md`** con la plantilla de abajo, muéstrame un resumen corto (objetivo, subtareas, casos de test) y **espera mi confirmación**. Ajusta lo que te pida.
-6. Al confirmar, pon `Estado: especificada` y recuérdame el siguiente paso: `/clear` y `/jarvis-implement N`; si es pequeña, `/jarvis-implement N` directamente, sin `/clear`.
+6. Al confirmar, deja `Estado` en `especificada`, cambia la línea del `CLAUDE.md` raíz a `Tarea activa: N (`docs/fases/fase-F/tarea-N.md`)` y recuérdame el siguiente paso: `/clear` y `/jarvis-implement`; si es pequeña, `/jarvis-implement` directamente, sin `/clear`.
 
 ## Plantilla de `tarea-N.md`
 
 ```markdown
 # Tarea N — <título>
 
-Estado: especificada
-Tamaño: normal | pequeña
-Fase: F · Plan: docs/fases/fase-F-plan.md
+| Campo  | Valor                       |
+| ------ | --------------------------- |
+| Estado | especificada                |
+| Tamaño | normal \| pequeña           |
+| Fase   | F                           |
+| Plan   | `docs/fases/fase-F-plan.md` |
 
 ## Objetivo
 <2-3 líneas: qué existe al terminar y para qué sirve.>

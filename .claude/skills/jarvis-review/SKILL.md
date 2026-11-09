@@ -1,21 +1,23 @@
 ---
 name: jarvis-review
-description: Paso 3 de 4 de una tarea en Jarvis. Usar con `/jarvis-review N` para revisar lo implementado en la tarea N contra su especificación, proponer mejoras y aplicar directamente las triviales que acepte.
-argument-hint: "N"
+description: Paso 3 de 4 de una tarea en Jarvis. Usar con `/jarvis-review [N]` para revisar lo implementado en la tarea N (por defecto, la tarea activa) contra su especificación, proponer mejoras y aplicar directamente las triviales que acepte.
+argument-hint: "[N]"
 disable-model-invocation: true
 ---
 
 # /jarvis-review — revisar la tarea y proponer mejoras
 
-Flujo: `/jarvis-spec N` → `/jarvis-implement N` → **`/jarvis-review N`** → `/jarvis-finish N`, cada paso tras `/clear`.
+Flujo: `/jarvis-spec` → `/jarvis-implement` → **`/jarvis-review`** → `/jarvis-finish`, cada paso tras `/clear`.
 
 **Fase activa (F):** la de la línea `Fase activa` del `CLAUDE.md` raíz. Si dice que no hay ninguna, dímelo y para.
-**Archivo de la tarea:** `docs/fases/fase-F/tarea-N.md`.
+**Tarea (N):** el argumento si lo paso; si no, la de la línea `Tarea activa` del `CLAUDE.md` raíz. Si no hay ninguna, dímelo y para. Si paso un N distinto de la tarea activa, avísame y pregúntame antes de seguir.
+**Rama:** si la rama actual tiene la forma `feature/F-N` y no coincide con F y N, avísame (no bloquea).
+**Archivo de la tarea:** `docs/fases/fase-F/tarea-N.md`. Su cabecera es una tabla `| Campo | Valor |` (`Estado`, `Tamaño`, `Fase`, `Plan`); para cambiar un campo, edita solo su fila.
 **Estados:** `especificada` → `en curso` → `implementada` → `revisada` → `terminada`.
 
-**Solo aplica mejoras triviales** en este paso; las demás aceptadas las aplica `/jarvis-implement N`.
+**Solo aplica mejoras triviales** en este paso; las demás aceptadas las aplica `/jarvis-implement`.
 Trivial = local, sin cambiar comportamiento, API ni especificación, y sin tests nuevos: import o variable sobrante, nombre confuso dentro de un archivo, typo, comentario, simplificar unas pocas líneas. Ante la duda, no es trivial.
-Si el estado no es `implementada`, dime qué paso falta y para. Si quedan mejoras aceptadas sin aplicar, dime que falta `/jarvis-implement N` y para.
+Si el `Estado` no es `implementada`, dime qué paso falta y para. Si quedan mejoras aceptadas sin aplicar, dime que falta `/jarvis-implement` y para.
 
 ## Pasos
 
@@ -44,6 +46,6 @@ Si el estado no es `implementada`, dime qué paso falta y para. Si quedan mejora
 
    Numera en orden de gravedad: **bloqueante** (incumple la especificación, bug o fallo de seguridad), **recomendable** (mejora clara de calidad o tests), **opcional** (gusto o pulido). Marca además como **trivial** las que cumplan la definición de arriba. Sé concreto y no rellenes: si está bien, dilo.
 4. **Pregúntame cuáles acepto.** Marca cada una como `(aceptada)` o `(descartada: <motivo>)`.
-5. **Aplica las triviales aceptadas**, márcalas `[x]` y verifica con `pnpm format` y los comandos de typecheck, lint y test (muestra solo errores). Si al aplicar una deja de parecer trivial, deshazla y déjala para `/jarvis-implement N`.
-6. **Siguiente paso.** Si quedan aceptadas sin aplicar, deja `Estado: implementada` y recuérdame `/clear` y `/jarvis-implement N`, y después volver a `/jarvis-review N`. Si no, pon `Estado: revisada` y recuérdame `/clear` y `/jarvis-finish N`.
-   Si la tarea es `Tamaño: pequeña`, en lugar de eso pregúntame si la cierro aquí mismo; si digo que sí, lee `.claude/skills/jarvis-finish/SKILL.md` y sigue sus pasos en esta sesión.
+5. **Aplica las triviales aceptadas**, márcalas `[x]` y verifica con `pnpm format` y los comandos de typecheck, lint y test (muestra solo errores). Si al aplicar una deja de parecer trivial, deshazla y déjala para `/jarvis-implement`.
+6. **Siguiente paso.** Si quedan aceptadas sin aplicar, deja `Estado` en `implementada` y recuérdame `/clear` y `/jarvis-implement`, y después volver a `/jarvis-review`. Si no, pon `Estado` en `revisada` y recuérdame `/clear` y `/jarvis-finish`.
+   Si la tarea es de `Tamaño` `pequeña`, en lugar de eso pregúntame si la cierro aquí mismo; si digo que sí, lee `.claude/skills/jarvis-finish/SKILL.md` y sigue sus pasos en esta sesión.

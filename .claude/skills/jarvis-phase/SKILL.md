@@ -26,12 +26,12 @@ Argumentos: `N` (empezar la fase N) o `close N` (cerrar la fase N).
    Si la entrevista ha definido o cambiado entidades, campos, roles o reglas de permisos, créalo o actualízalo en `docs/dominio.md` (glosario del hogar: miembros y roles, entidades con sus campos y reglas, en lenguaje de casa, no de código).
    Muéstrame un resumen corto y **espera mi confirmación**. No escribas código antes.
 4. **Tareas.** Esta skill no implementa. Cada tarea del plan se hace con cuatro skills, cada una en una sesión limpia (`/clear` entre ellas) y comunicadas por `docs/fases/fase-N/tarea-M.md`:
-   `/jarvis-spec M` → `/jarvis-implement M` (una vez por subtarea) → `/jarvis-review M` → `/jarvis-finish M`, y commit antes de la siguiente tarea.
-   Al confirmar el plan, pon `Fase activa: N` en el `CLAUDE.md` raíz (las skills de tarea la leen de ahí) y recuérdame `/clear` y `/jarvis-spec` con la primera tarea.
+   `/jarvis-spec` → `/jarvis-implement` (una vez por subtarea) → `/jarvis-review` → `/jarvis-finish`, y commit antes de la siguiente tarea. El número de tarea es opcional: `/jarvis-spec` toma la primera pendiente del plan y las demás la `Tarea activa` del `CLAUDE.md` raíz.
+   Al confirmar el plan, pon `Fase activa: N` y `Tarea activa: ninguna (siguiente: 1)` en el `CLAUDE.md` raíz (las skills de tarea las leen de ahí) y recuérdame `/clear` y `/jarvis-spec`.
 
 ## Cerrar una fase (`/jarvis-phase close N`)
 
-1. Comprueba que todas las tareas están marcadas en el plan y con `Estado: terminada` en su `tarea-M.md`, el criterio de terminado del plan, y ejecuta `pnpm format:check` y los comandos de typecheck, lint y test de la sección "Comandos" del `CLAUDE.md` raíz. Si algo falla, dímelo antes de cerrar.
+1. Comprueba que todas las tareas están marcadas en el plan y con la fila `Estado` en `terminada` en la tabla de su `tarea-M.md`, el criterio de terminado del plan, y ejecuta `pnpm format:check` y los comandos de typecheck, lint y test de la sección "Comandos" del `CLAUDE.md` raíz. Si algo falla, dímelo antes de cerrar.
 2. Escribe `docs/fases/fase-N.md` (máximo ~1 página), pensado para que la siguiente sesión empiece solo con él:
    - Qué se ha construido (módulos, endpoints, tablas) y dónde está.
    - Decisiones tomadas y su porqué.
@@ -39,5 +39,5 @@ Argumentos: `N` (empezar la fase N) o `close N` (cerrar la fase N).
    - Pendientes y deuda técnica conocida.
    - Conceptos de backend aprendidos en la fase, en una lista breve.
    Usa como fuente las secciones "Conceptos nuevos" y "Cierre" de cada `docs/fases/fase-N/tarea-M.md` y las "Notas" del plan, no el código entero.
-3. Cambia la línea del `CLAUDE.md` raíz a `Fase activa: ninguna (siguiente: N+1)`. Actualiza la sección de comandos de `CLAUDE.md` si han cambiado, y el `CLAUDE.md` de cada app tocada si han aparecido convenciones o patrones nuevos (o crea el de una app nueva). Comprueba que `docs/dominio.md` refleja lo construido.
+3. Cambia las líneas del `CLAUDE.md` raíz a `Fase activa: ninguna (siguiente: N+1)` y `Tarea activa: ninguna`. Actualiza la sección de comandos de `CLAUDE.md` si han cambiado, y el `CLAUDE.md` de cada app tocada si han aparecido convenciones o patrones nuevos (o crea el de una app nueva). Comprueba que `docs/dominio.md` refleja lo construido.
 4. Propón el mensaje de commit (no lo hagas salvo que te lo pida) y recuérdame hacer `/clear` antes de la siguiente fase.

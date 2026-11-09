@@ -1,8 +1,11 @@
 # Tarea 1 — Migraciones y tablas de usuarios
 
-Estado: terminada
-Tamaño: normal
-Fase: 1 · Plan: docs/fases/fase-1-plan.md
+| Campo  | Valor                       |
+| ------ | --------------------------- |
+| Estado | terminada                   |
+| Tamaño | normal                      |
+| Fase   | 1                           |
+| Plan   | `docs/fases/fase-1-plan.md` |
 
 ## Objetivo
 La API tiene migraciones versionadas con Drizzle y las tablas `users` y `sessions`. Al levantar Compose en desarrollo, las migraciones pendientes se aplican solas antes de arrancar el servidor. Es la base de la auth (tareas 4–7) y de la infra de tests (tarea 2).
