@@ -27,7 +27,7 @@ Tres bloques, cada uno usable y revisable por separado: **1a** auth y usuarios, 
 
 1. [x] **Migraciones y tablas de usuarios:** `drizzle-kit`, scripts `db:generate`/`db:migrate`, tablas `users` (nombre, email, hash, rol, activo) y `sessions`; migrar al arrancar en dev.
 2. [x] **Infra de tests con BD:** BD `jarvis_test` (la crea el *globalSetup* de Vitest), *setup* de Vitest que migra y helper para vaciar tablas y crear usuarios/sesiones de prueba. Documentar en la sección "Comandos" del `CLAUDE.md` raíz cómo se ejecutan los tests (host o contenedor, `TEST_DATABASE_URL`).
-3. [ ] **OpenAPI:** type provider de Zod, `@fastify/swagger` + UI en `/docs`, `/health` migrado al nuevo patrón.
+3. [x] **OpenAPI:** type provider de Zod, `@fastify/swagger` + UI en `/docs`, `/health` migrado al nuevo patrón.
 4. [ ] **Contraseñas y seed:** helper de hash/verificación con argon2 y script `db:seed` que crea el admin desde `.env` si no existe. Tests: hash y verificación.
 5. [ ] **Login, logout y `/auth/me`:** crear sesión, cookie, expiración y renovación, cierre de sesión. Tests: credenciales malas → 401, usuario desactivado → 401, sesión caducada → 401, logout invalida el token, Bearer y cookie funcionan.
 6. [ ] **Autorización:** `authenticate` y `requireRole`. Tests: sin token → 401, rol insuficiente → 403.
@@ -69,3 +69,4 @@ Tres bloques, cada uno usable y revisable por separado: **1a** auth y usuarios, 
 
 - Deuda (tarea 1): el `CMD` de la imagen `prod` no aplica migraciones (se resolverá al desplegar). El email se pasa a minúsculas al escribirlo (tareas 4 y 7); la BD solo garantiza que sea único.
 - Tests (tarea 2): helpers en `apps/api/src/test/helpers.ts` (`buildTestApp`, `createUser`, `createSession`). Provisionales: `createUser` guarda `passwordHash: 'not-a-hash'` (tarea 4: opción `password` con argon2) y `createSession` replica a mano el SHA-256 del token (tarea 5: usar la función real).
+- OpenAPI (tarea 3): patrón de rutas en `apps/api/src/routes/health.ts`; errores con `ErrorResponseSchema` de `@jarvis/schemas`; `securitySchemes` pendiente para la tarea 5/6. ESLint desactiva `require-await` solo en `apps/api/src/routes/**`: si la tarea 9 mueve las rutas, actualizar ese glob en `eslint.config.js`.
