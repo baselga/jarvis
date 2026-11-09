@@ -10,9 +10,11 @@ src/app.ts         buildApp(): crea la instancia Fastify y registra rutas. Sin p
 src/config.ts      Variables de entorno validadas con Zod (fail fast).
 src/db/client.ts   createDb(): pool `postgres` + Drizzle (con el esquema).
 src/db/schema/     Tablas Drizzle, un archivo por bloque (`users.ts`); `index.ts` reexporta.
+src/db/run-migrations.ts  runMigrations(url): la usan `migrate.ts` y el setup de tests.
 src/db/migrate.ts  Aplica las migraciones pendientes (`pnpm db:migrate`; `dev` lo ejecuta al arrancar).
 drizzle/           Migraciones SQL generadas por drizzle-kit, versionadas en git.
 src/routes/*.ts    Un plugin por grupo de rutas.
+src/test/          Infra de tests: BD `_test` (env.ts, global-setup.ts, setup.ts) y helpers.
 ```
 
 ## Patrones
@@ -29,8 +31,11 @@ src/routes/*.ts    Un plugin por grupo de rutas.
 ## Tests
 
 - Vitest, archivo junto al código (`foo.ts` → `foo.test.ts`).
-- Peticiones con `app.inject()` sobre `buildApp()`; sin abrir puertos.
-- Ejecutar: `pnpm --filter @jarvis/api test`.
+- Peticiones con `app.inject()` sobre `buildTestApp()` (de `src/test/helpers.ts`); sin abrir puertos.
+- BD real (`TEST_DATABASE_URL`, nombre acabado en `_test`) con los helpers `createUser` y `createSession`. La BD simulada solo para simular fallos, como en `health.test.ts`.
+- Cada test empieza con las tablas vacías (`beforeEach` en `src/test/setup.ts`): crea lo que necesites en el propio test.
+- Sin paralelismo entre archivos (comparten BD).
+- Ejecutar: `pnpm --filter @jarvis/api test` (Postgres levantado).
 
 ## Pendiente de decidir (fase 1)
 
