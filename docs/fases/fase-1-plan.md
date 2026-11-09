@@ -25,7 +25,7 @@ Tres bloques, cada uno usable y revisable por separado: **1a** auth y usuarios, 
 
 ### 1a — Auth, usuarios y roles
 
-1. [ ] **Migraciones y tablas de usuarios:** `drizzle-kit`, scripts `db:generate`/`db:migrate`, tablas `users` (nombre, email, hash, rol, activo) y `sessions`; migrar al arrancar en dev.
+1. [x] **Migraciones y tablas de usuarios:** `drizzle-kit`, scripts `db:generate`/`db:migrate`, tablas `users` (nombre, email, hash, rol, activo) y `sessions`; migrar al arrancar en dev.
 2. [ ] **Infra de tests con BD:** BD `jarvis_test` (script de inicio de Postgres), *setup* de Vitest que migra y helper para vaciar tablas y crear usuarios/sesiones de prueba. Documentar en la sección "Comandos" del `CLAUDE.md` raíz cómo se ejecutan los tests (host o contenedor, `DATABASE_URL` de test).
 3. [ ] **OpenAPI:** type provider de Zod, `@fastify/swagger` + UI en `/docs`, `/health` migrado al nuevo patrón.
 4. [ ] **Contraseñas y seed:** helper de hash/verificación con argon2 y script `db:seed` que crea el admin desde `.env` si no existe. Tests: hash y verificación.
@@ -64,3 +64,7 @@ Tres bloques, cada uno usable y revisable por separado: **1a** auth y usuarios, 
 - Un invitado entra, ve la biblioteca y no puede modificar nada; un adulto no gestiona usuarios ni toca lecturas ajenas.
 - `/docs` muestra la API documentada.
 - `docker compose up -d` levanta `postgres`, `api` y `web`; `pnpm -r typecheck`, `pnpm -r test` y `pnpm -r lint` pasan.
+
+## Notas
+
+- Deuda (tarea 1): el `CMD` de la imagen `prod` no aplica migraciones (se resolverá al desplegar). El email se pasa a minúsculas al escribirlo (tareas 4 y 7); la BD solo garantiza que sea único.

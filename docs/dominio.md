@@ -4,9 +4,9 @@ Glosario de quién vive en casa, qué datos guarda Jarvis y qué reglas se aplic
 
 ## Miembros y roles
 
-- **admin** — Daniel. Puede todo, incluida la gestión de usuarios.
-- **adulto** — su mujer. Gestiona todos los datos del hogar, pero no los usuarios.
-- **invitado** — cualquier otra persona. Una única cuenta compartida. Solo consulta.
+- **admin** (`admin`) — Daniel. Puede todo, incluida la gestión de usuarios.
+- **adulto** (`adult`) — su mujer. Gestiona todos los datos del hogar, pero no los usuarios.
+- **invitado** (`guest`) — cualquier otra persona. Una única cuenta compartida. Solo consulta.
 
 No hay registro: el primer admin se crea al instalar y él da de alta al resto. Un usuario no se borra, se **desactiva** (no puede entrar y se cierran sus sesiones, pero se conserva su historial).
 

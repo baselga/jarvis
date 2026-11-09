@@ -49,7 +49,7 @@ Nada avisa si se olvida alguno de estos pasos:
 
 - Los tipos salen de `packages/schemas`; no dupliques tipos a mano en apps.
 - El asistente llama a la API **siempre con el token del usuario**, nunca con credenciales de admin, para que se apliquen sus permisos.
-- Roles: `admin`, `adulto`, `invitado`. Los permisos se comprueban en la API, no en el front ni en el asistente.
+- Roles: `admin`, `adult`, `guest` (admin, adulto, invitado). Los permisos se comprueban en la API, no en el front ni en el asistente.
 - Todo corre en Docker Compose desde el primer día.
 - Secretos solo en `.env` (no versionado); mantén `.env.example` al día.
 
