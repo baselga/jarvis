@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
+import { verifyPassword } from '../auth/password.js';
 import { users } from '../db/schema/index.js';
 import { assertTestDatabaseUrl } from './env.js';
 import { createSession, createUser, testDb } from './helpers.js';
@@ -43,6 +44,12 @@ describe('createUser', () => {
     const user = await createUser({ role: 'guest', active: false });
 
     expect(user).toMatchObject({ role: 'guest', active: false });
+  });
+
+  it('con `password` guarda un hash que verifyPassword acepta', async () => {
+    const user = await createUser({ password: 'correcta-123' });
+
+    expect(await verifyPassword(user.passwordHash, 'correcta-123')).toBe(true);
   });
 });
 

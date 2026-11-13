@@ -5,7 +5,7 @@ Asistente doméstico tipo Alexa con IA, alojado en un servidor en casa. Proyecto
 Objetivos, arquitectura y fases completos: `docs/PLAN.md` (léelo solo al empezar una fase, no en cada tarea).
 Estado del proyecto: `docs/fases/fase-N.md` (un resumen por fase terminada).
 Fase activa: 1 (plan: `docs/fases/fase-1-plan.md`)
-Tarea activa: ninguna (siguiente: 4 — Contraseñas y seed)
+Tarea activa: ninguna (siguiente: 5 — Login, logout y `/auth/me`)
 
 ## Forma de trabajar
 
@@ -66,6 +66,7 @@ Obligatorios en: autenticación y roles, permisos por endpoint (p. ej. un invita
 - `pnpm -r typecheck` — tipos
 - `pnpm -r test` — tests desde el host (Postgres levantado y `TEST_DATABASE_URL` en `.env`); en el contenedor: `docker compose exec api pnpm --filter @jarvis/api test`. La BD `jarvis_test` se crea y migra sola y se vacía entre tests.
 - `pnpm -r lint` — lint
+- `docker compose exec api pnpm --filter @jarvis/api db:seed` — crea el primer admin con `ADMIN_*` del `.env` (no toca uno existente)
 
 Verifica con estos comandos tras cada tarea y muestra solo los errores, no la salida completa.
 

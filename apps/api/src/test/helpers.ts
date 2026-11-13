@@ -2,6 +2,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import type { Role } from '@jarvis/schemas';
 import { sql } from 'drizzle-orm';
 import { buildApp } from '../app.js';
+import { hashPassword } from '../auth/password.js';
 import { createDb } from '../db/client.js';
 import { sessions, users } from '../db/schema/index.js';
 import { testDatabaseUrl } from './env.js';
@@ -31,10 +32,12 @@ export function buildTestApp() {
 let userCounter = 0;
 
 // Inserta un usuario con valores por defecto válidos y únicos.
-// Hash de contraseña de relleno: el real (argon2) llega en la tarea 4.
-export async function createUser(
-  overrides: Partial<{ name: string; email: string; role: Role; active: boolean }> = {},
-) {
+// Solo hashea si se pasa `password` (argon2 es lento a propósito); si no,
+// guarda un hash de relleno con el que ninguna contraseña es válida.
+export async function createUser({
+  password,
+  ...overrides
+}: Partial<{ name: string; email: string; role: Role; active: boolean; password: string }> = {}) {
   userCounter += 1;
   const [user] = await testDb
     .insert(users)
@@ -43,7 +46,7 @@ export async function createUser(
       email: `user-${userCounter}@test.local`,
       role: 'adult',
       active: true,
-      passwordHash: 'not-a-hash',
+      passwordHash: password === undefined ? 'not-a-hash' : await hashPassword(password),
       ...overrides,
     })
     .returning();

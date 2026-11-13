@@ -13,6 +13,9 @@ src/db/client.ts   createDb(): pool `postgres` + Drizzle (con el esquema).
 src/db/schema/     Tablas Drizzle, un archivo por bloque (`users.ts`); `index.ts` reexporta.
 src/db/run-migrations.ts  runMigrations(url): la usan `migrate.ts` y el setup de tests.
 src/db/migrate.ts  Aplica las migraciones pendientes (`pnpm db:migrate`; `dev` lo ejecuta al arrancar).
+src/db/seed-admin.ts  seedAdmin(db, datos): crea el primer admin si no existe (idempotente).
+src/db/seed.ts     Script `pnpm db:seed`: lee `ADMIN_*` del entorno y llama a seedAdmin.
+src/auth/          Contraseñas (argon2id: hashPassword/verifyPassword).
 drizzle/           Migraciones SQL generadas por drizzle-kit, versionadas en git.
 src/routes/*.ts    Un plugin por grupo de rutas.
 src/test/          Infra de tests: BD `_test` (env.ts, global-setup.ts, setup.ts) y helpers.
@@ -36,7 +39,7 @@ src/test/          Infra de tests: BD `_test` (env.ts, global-setup.ts, setup.ts
 
 - Vitest, archivo junto al código (`foo.ts` → `foo.test.ts`).
 - Peticiones con `app.inject()` sobre `buildTestApp()` (de `src/test/helpers.ts`); sin abrir puertos.
-- BD real (`TEST_DATABASE_URL`, nombre acabado en `_test`) con los helpers `createUser` y `createSession`. La BD simulada solo para simular fallos, como en `health.test.ts`.
+- BD real (`TEST_DATABASE_URL`, nombre acabado en `_test`) con los helpers `createUser` y `createSession`. `createUser({ password })` solo si el test hace login (argon2 es lento). La BD simulada solo para simular fallos, como en `health.test.ts`.
 - Cada test empieza con las tablas vacías (`beforeEach` en `src/test/setup.ts`): crea lo que necesites en el propio test.
 - Sin paralelismo entre archivos (comparten BD).
 - Ejecutar: `pnpm --filter @jarvis/api test` (Postgres levantado).
