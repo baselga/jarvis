@@ -1,8 +1,8 @@
-import { createHash, randomBytes } from 'node:crypto';
 import type { Role } from '@jarvis/schemas';
 import { sql } from 'drizzle-orm';
-import { buildApp } from '../app.js';
+import { type BuildAppOptions, buildApp } from '../app.js';
 import { hashPassword } from '../auth/password.js';
+import { SESSION_TTL_MS, generateSessionToken, hashSessionToken } from '../auth/session.js';
 import { createDb } from '../db/client.js';
 import { sessions, users } from '../db/schema/index.js';
 import { testDatabaseUrl } from './env.js';
@@ -25,8 +25,8 @@ export async function resetDb() {
 }
 
 // App con la BD de test. Quien la usa hace `app.close()` (no cierra la BD).
-export function buildTestApp() {
-  return buildApp({ db: testDb });
+export function buildTestApp(options: Omit<BuildAppOptions, 'db'> = {}) {
+  return buildApp({ ...options, db: testDb });
 }
 
 let userCounter = 0;
@@ -53,18 +53,17 @@ export async function createUser({
   return user!;
 }
 
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-
 // Inserta una sesión y devuelve el token en claro (lo que tendría el cliente).
-// En la BD se guarda su SHA-256; la tarea 5 cambiará esto por la función real de auth.
+// A diferencia de `createSession` de `auth/session.ts`, permite fijar `expiresAt`
+// (sesiones caducadas o a punto de renovarse) y no borra las caducadas.
 export async function createSession(userId: string, { expiresAt }: { expiresAt?: Date } = {}) {
-  const token = randomBytes(32).toString('base64url');
+  const token = generateSessionToken();
   const [session] = await testDb
     .insert(sessions)
     .values({
-      id: createHash('sha256').update(token).digest('hex'),
+      id: hashSessionToken(token),
       userId,
-      expiresAt: expiresAt ?? new Date(Date.now() + THIRTY_DAYS_MS),
+      expiresAt: expiresAt ?? new Date(Date.now() + SESSION_TTL_MS),
     })
     .returning();
   return { token, session: session! };

@@ -1,4 +1,4 @@
-import { PasswordSchema } from '@jarvis/schemas';
+import { EmailSchema, PasswordSchema } from '@jarvis/schemas';
 import { z } from 'zod';
 import { loadConfig } from '../config.js';
 import { createDb } from './client.js';
@@ -7,7 +7,7 @@ import { seedAdmin } from './seed-admin.js';
 // Script `pnpm db:seed`: crea el primer admin a partir de `ADMIN_*`.
 // Esquema propio (no en `EnvSchema`): el servidor arranca sin estas variables.
 const AdminEnvSchema = z.object({
-  ADMIN_EMAIL: z.email(),
+  ADMIN_EMAIL: EmailSchema,
   ADMIN_PASSWORD: PasswordSchema,
   ADMIN_NAME: z.string().min(1).default('Admin'),
 });

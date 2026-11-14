@@ -4,10 +4,10 @@ import { createUser, testDb } from '../test/helpers.js';
 import { users } from './schema/index.js';
 import { seedAdmin } from './seed-admin.js';
 
-const admin = { name: 'Admin', email: ' Admin@Casa.Local ', password: 'correcta-123' };
+const admin = { name: 'Admin', email: 'admin@casa.local', password: 'correcta-123' };
 
 describe('seedAdmin', () => {
-  it('con la BD vacía crea un admin activo, con email en minúsculas y contraseña verificable', async () => {
+  it('con la BD vacía crea un admin activo con contraseña verificable', async () => {
     expect(await seedAdmin(testDb, admin)).toBe('created');
 
     const [user] = await testDb.select().from(users);

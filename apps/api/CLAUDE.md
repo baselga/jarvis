@@ -15,7 +15,8 @@ src/db/run-migrations.ts  runMigrations(url): la usan `migrate.ts` y el setup de
 src/db/migrate.ts  Aplica las migraciones pendientes (`pnpm db:migrate`; `dev` lo ejecuta al arrancar).
 src/db/seed-admin.ts  seedAdmin(db, datos): crea el primer admin si no existe (idempotente).
 src/db/seed.ts     Script `pnpm db:seed`: lee `ADMIN_*` del entorno y llama a seedAdmin.
-src/auth/          Contraseñas (argon2id: hashPassword/verifyPassword).
+src/auth/          password.ts (argon2id), session.ts (crear/validar/borrar sesiones opacas),
+                   request-token.ts (token de Bearer o cookie, opciones de la cookie).
 drizzle/           Migraciones SQL generadas por drizzle-kit, versionadas en git.
 src/routes/*.ts    Un plugin por grupo de rutas.
 src/test/          Infra de tests: BD `_test` (env.ts, global-setup.ts, setup.ts) y helpers.
@@ -33,12 +34,16 @@ src/test/          Infra de tests: BD `_test` (env.ts, global-setup.ts, setup.ts
 - **Variables de entorno nuevas:** añadirlas a `EnvSchema` en `config.ts`, a `.env.example` y, si Compose las pasa, a `docker-compose.yml`.
 - **Cambiar el modelo:** editar `src/db/schema/` → `pnpm --filter @jarvis/api db:generate` → revisar el SQL de `drizzle/` → se aplica al reiniciar `api` (`docker compose restart api`). Las migraciones ya commiteadas no se editan.
 - **Enums de Postgres desde Zod:** `pgEnum('x', XSchema.enum)` (no `.options`: en Zod 4 no es tupla). Ver `src/db/schema/users.ts`.
+- **Cookie de sesión:** `jarvis_session` con las opciones de `sessionCookieOptions(secure)` (`auth/request-token.ts`), tanto en `setCookie` como en `clearCookie`. `Secure` llega por `BuildAppOptions.cookieSecure` → opción del plugin `authRoutes`.
+- **Token de la petición:** `getRequestToken(request)`; si hay cabecera `Authorization`, manda ella y la cookie se ignora.
+- **Cuerpo vacío:** `buildApp` sustituye el parser de JSON: un cuerpo vacío con `Content-Type: application/json` llega como `undefined` (no 400). Así funcionan los POST sin cuerpo, como logout.
+- **Emails:** toda entrada de email usa `EmailSchema` de `@jarvis/schemas` (trim + minúsculas). El login busca el email tal cual: un alta sin normalizar crearía un usuario que no puede entrar.
 - **Códigos HTTP con intención:** 503 si falla una dependencia (BD), no 500.
 
 ## Tests
 
 - Vitest, archivo junto al código (`foo.ts` → `foo.test.ts`).
-- Peticiones con `app.inject()` sobre `buildTestApp()` (de `src/test/helpers.ts`); sin abrir puertos.
+- Peticiones con `app.inject()` sobre `buildTestApp()` (de `src/test/helpers.ts`; acepta las opciones de `buildApp` salvo `db`, p. ej. `{ cookieSecure: true }`); sin abrir puertos.
 - BD real (`TEST_DATABASE_URL`, nombre acabado en `_test`) con los helpers `createUser` y `createSession`. `createUser({ password })` solo si el test hace login (argon2 es lento). La BD simulada solo para simular fallos, como en `health.test.ts`.
 - Cada test empieza con las tablas vacías (`beforeEach` en `src/test/setup.ts`): crea lo que necesites en el propio test.
 - Sin paralelismo entre archivos (comparten BD).

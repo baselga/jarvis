@@ -4,7 +4,11 @@ import { createDb } from './db/client.js';
 
 const config = loadConfig();
 const { db, close: closeDb } = createDb(config.DATABASE_URL);
-const app = buildApp({ logger: { level: config.LOG_LEVEL }, db });
+const app = buildApp({
+  logger: { level: config.LOG_LEVEL },
+  db,
+  cookieSecure: config.NODE_ENV === 'production',
+});
 
 // Al cerrar la app (tras terminar las peticiones en curso) cerramos el pool de BD.
 app.addHook('onClose', closeDb);
