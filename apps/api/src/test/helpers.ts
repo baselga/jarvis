@@ -4,7 +4,16 @@ import { type BuildAppOptions, buildApp } from '../app.js';
 import { hashPassword } from '../auth/password.js';
 import { SESSION_TTL_MS, generateSessionToken, hashSessionToken } from '../auth/session.js';
 import { createDb } from '../db/client.js';
-import { authors, bookAuthors, books, sessions, users } from '../db/schema/index.js';
+import {
+  authors,
+  bookAuthors,
+  bookGenres,
+  books,
+  genres,
+  sagas,
+  sessions,
+  users,
+} from '../db/schema/index.js';
 import { testDatabaseUrl } from './env.js';
 
 // Una conexión por archivo de test (Vitest aísla los módulos por archivo);
@@ -81,22 +90,61 @@ export async function createAuthor({ name }: { name?: string } = {}) {
   return author!;
 }
 
+let genreCounter = 0;
+
+// Inserta un género con nombre único por defecto.
+export async function createGenre({ name }: { name?: string } = {}) {
+  genreCounter += 1;
+  const [genre] = await testDb
+    .insert(genres)
+    .values({ name: name ?? `Genre ${genreCounter}` })
+    .returning();
+  return genre!;
+}
+
+let sagaCounter = 0;
+
+// Inserta una saga con nombre único por defecto.
+export async function createSaga({ name }: { name?: string } = {}) {
+  sagaCounter += 1;
+  const [saga] = await testDb
+    .insert(sagas)
+    .values({ name: name ?? `Saga ${sagaCounter}` })
+    .returning();
+  return saga!;
+}
+
 let bookCounter = 0;
 
-// Inserta un libro y lo vincula a `authorIds` (todavía no hay rutas de libros).
+// Inserta un libro y lo vincula a `authorIds` y `genreIds` (todavía no hay rutas de libros).
+// `sagaOrder` solo vale con `sagaId` (lo exige un `check` de la BD).
 export async function createBook({
   title,
   authorIds = [],
-}: { title?: string; authorIds?: string[] } = {}) {
+  genreIds = [],
+  sagaId,
+  sagaOrder,
+}: {
+  title?: string;
+  authorIds?: string[];
+  genreIds?: string[];
+  sagaId?: string;
+  sagaOrder?: number;
+} = {}) {
   bookCounter += 1;
   const [book] = await testDb
     .insert(books)
-    .values({ title: title ?? `Book ${bookCounter}` })
+    .values({ title: title ?? `Book ${bookCounter}`, sagaId, sagaOrder })
     .returning();
   if (authorIds.length > 0) {
     await testDb
       .insert(bookAuthors)
       .values(authorIds.map((authorId) => ({ bookId: book!.id, authorId })));
+  }
+  if (genreIds.length > 0) {
+    await testDb
+      .insert(bookGenres)
+      .values(genreIds.map((genreId) => ({ bookId: book!.id, genreId })));
   }
   return book!;
 }

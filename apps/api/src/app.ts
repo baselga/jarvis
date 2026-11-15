@@ -6,7 +6,9 @@ import type { Db } from './db/client.js';
 import { registerOpenApi } from './openapi.js';
 import { authRoutes } from './modules/auth/routes.js';
 import { authorRoutes } from './modules/authors/routes.js';
+import { genreRoutes } from './modules/genres/routes.js';
 import { healthRoutes } from './modules/health/routes.js';
+import { sagaRoutes } from './modules/sagas/routes.js';
 import { userRoutes } from './modules/users/routes.js';
 
 declare module 'fastify' {
@@ -53,5 +55,7 @@ export function buildApp({ logger = false, db, cookieSecure = false }: BuildAppO
   app.register(authRoutes, { cookieSecure });
   app.register(userRoutes);
   app.register(authorRoutes);
+  app.register(genreRoutes);
+  app.register(sagaRoutes);
   return app;
 }
