@@ -8,6 +8,13 @@
       "when": 1794241162748,
       "tag": "0000_thick_the_hand",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794763390432,
+      "tag": "0001_lame_korath",
+      "breakpoints": true
     }
   ]
 }

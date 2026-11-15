@@ -35,7 +35,7 @@ Tres bloques, cada uno usable y revisable por separado: **1a** auth y usuarios, 
 
 ### 1b — Biblioteca
 
-8. [ ] **Modelo de la biblioteca:** tablas `books`, `authors`, `book_authors`, `genres`, `book_genres`, `sagas`, `loans`, `readings` + migración + esquemas Zod en `packages/schemas`.
+8. [x] **Modelo de la biblioteca:** tablas `books`, `authors`, `book_authors`, `genres`, `book_genres`, `sagas`, `loans`, `readings` + migración + esquemas Zod en `packages/schemas`.
 9. [ ] **Autores:** CRUD completo (el patrón de referencia para el resto). Tests: permisos por rol (invitado lee, no crea/edita/borra), borrar autor con libros → 409.
 10. [ ] **Géneros y sagas:** CRUD siguiendo el patrón; detalle de saga con sus libros en orden. Tests: permisos por rol, 409 al borrar con libros.
 11. [ ] **Libros (CRUD):** alta y edición con autores, géneros y saga en una transacción; detalle con relaciones y estado de préstamo. Tests: permisos por rol, IDs de autor/género inexistentes → 400.
@@ -74,3 +74,4 @@ Tres bloques, cada uno usable y revisable por separado: **1a** auth y usuarios, 
 - Sesiones (tarea 5): la tarea 6 construye `authenticate` sobre `getRequestToken` + `validateSession` (`apps/api/src/auth/`) y añade `security` a las rutas en OpenAPI (los `securitySchemes` `bearerAuth`/`cookieAuth` ya existen). La tarea 7 usa `EmailSchema` en el alta. Deuda: no hay límite de intentos de login (`@fastify/rate-limit`).
 - Autorización (tarea 6): patrón «Rutas protegidas» en `apps/api/CLAUDE.md` (`app.authenticate` como hook del plugin, `requireRole(...)` por ruta, `sessionSecurity` + `authErrorResponses` en el `schema`); referencia en `apps/api/src/auth/authenticate.test.ts`. Deuda: si la BD cae, las rutas protegidas dan 500, no 503 (falta un `setErrorHandler` global).
 - Usuarios (tarea 7): `isUniqueViolation` (`db/errors.ts`) → 409 y `DbOrTx` (`db/client.ts`) para funciones que escriben dentro de una transacción; la tarea 11 los reutiliza en el alta de libros. `User` va sin `createdAt`/`updatedAt` hasta que la tarea 8 decida cómo serializar fechas. La tarea 20 usa `PUT /auth/password` para la contraseña propia: `PUT /users/:id/password` sobre uno mismo cierra también la sesión actual. Deuda: no hay `PATCH /auth/me` (un adulto no puede editar su nombre).
+- Biblioteca (tarea 8): tablas en `apps/api/src/db/schema/library.ts`, esquemas de entidad y de campo en `packages/schemas` (los DTOs los define cada CRUD). `ON DELETE RESTRICT` lanza `23001`, no `23503`: el helper de las tareas 9 y 11 debe detectar ambos. Las fechas van como `DateSchema` (`YYYY-MM-DD`); `createdAt`/`updatedAt` no se exponen. Deuda: `SagaOrderSchema` sin test (añadirlo en la tarea 11 con el DTO de libro).

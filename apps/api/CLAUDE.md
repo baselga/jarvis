@@ -11,7 +11,7 @@ src/openapi.ts     registerOpenApi(): @fastify/swagger + Swagger UI en /docs (an
 src/config.ts      Variables de entorno validadas con Zod (fail fast).
 src/db/client.ts   createDb(): pool `postgres` + Drizzle (con el esquema). Tipos `Db` y `DbOrTx`.
 src/db/errors.ts   isUniqueViolation(error): detecta el `23505` de Postgres.
-src/db/schema/     Tablas Drizzle, un archivo por bloque (`users.ts`); `index.ts` reexporta.
+src/db/schema/     Tablas Drizzle, un archivo por bloque (`users.ts`, `library.ts`); `index.ts` reexporta.
 src/db/run-migrations.ts  runMigrations(url): la usan `migrate.ts` y el setup de tests.
 src/db/migrate.ts  Aplica las migraciones pendientes (`pnpm db:migrate`; `dev` lo ejecuta al arrancar).
 src/db/seed-admin.ts  seedAdmin(db, datos): crea el primer admin si no existe (idempotente).
@@ -36,6 +36,7 @@ src/test/          Infra de tests: BD `_test` (env.ts, global-setup.ts, setup.ts
 - **Tipos de petición/respuesta desde `@jarvis/schemas`**, no definidos aquí.
 - **Variables de entorno nuevas:** añadirlas a `EnvSchema` en `config.ts`, a `.env.example` y, si Compose las pasa, a `docker-compose.yml`.
 - **Cambiar el modelo:** editar `src/db/schema/` → `pnpm --filter @jarvis/api db:generate` → revisar el SQL de `drizzle/` → se aplica al reiniciar `api` (`docker compose restart api`). Las migraciones ya commiteadas no se editan.
+- **Reglas en la BD además de en Zod:** `check`, índice único parcial (`.where(...)`) e índice único sobre `lower(name)` en `db/schema/library.ts`. Un `ON DELETE RESTRICT` lanza `23001`, no `23503` (ese es de `NO ACTION` o un id inexistente): el helper de la tarea 9 debe mirar ambos. Los días sin hora son `date` (texto `YYYY-MM-DD`) + `DateSchema`, nunca `timestamp`.
 - **Enums de Postgres desde Zod:** `pgEnum('x', XSchema.enum)` (no `.options`: en Zod 4 no es tupla). Ver `src/db/schema/users.ts`.
 - **Cookie de sesión:** `jarvis_session` con las opciones de `sessionCookieOptions(secure)` (`auth/request-token.ts`), tanto en `setCookie` como en `clearCookie`. `Secure` llega por `BuildAppOptions.cookieSecure` → opción de los plugins `authPlugin` y `authRoutes`.
 - **Token de la petición:** `getRequestToken(request)`; si hay cabecera `Authorization`, manda ella y la cookie se ignora.
