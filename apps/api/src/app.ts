@@ -4,9 +4,9 @@ import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod
 import { authPlugin } from './auth/authenticate.js';
 import type { Db } from './db/client.js';
 import { registerOpenApi } from './openapi.js';
-import { authRoutes } from './routes/auth.js';
-import { healthRoutes } from './routes/health.js';
-import { userRoutes } from './routes/users.js';
+import { authRoutes } from './modules/auth/routes.js';
+import { healthRoutes } from './modules/health/routes.js';
+import { userRoutes } from './modules/users/routes.js';
 
 declare module 'fastify' {
   interface FastifyInstance {

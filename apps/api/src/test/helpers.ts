@@ -4,7 +4,7 @@ import { type BuildAppOptions, buildApp } from '../app.js';
 import { hashPassword } from '../auth/password.js';
 import { SESSION_TTL_MS, generateSessionToken, hashSessionToken } from '../auth/session.js';
 import { createDb } from '../db/client.js';
-import { sessions, users } from '../db/schema/index.js';
+import { authors, bookAuthors, books, sessions, users } from '../db/schema/index.js';
 import { testDatabaseUrl } from './env.js';
 
 // Una conexión por archivo de test (Vitest aísla los módulos por archivo);
@@ -67,4 +67,36 @@ export async function createSession(userId: string, { expiresAt }: { expiresAt?:
     })
     .returning();
   return { token, session: session! };
+}
+
+let authorCounter = 0;
+
+// Inserta un autor con nombre único por defecto.
+export async function createAuthor({ name }: { name?: string } = {}) {
+  authorCounter += 1;
+  const [author] = await testDb
+    .insert(authors)
+    .values({ name: name ?? `Author ${authorCounter}` })
+    .returning();
+  return author!;
+}
+
+let bookCounter = 0;
+
+// Inserta un libro y lo vincula a `authorIds` (todavía no hay rutas de libros).
+export async function createBook({
+  title,
+  authorIds = [],
+}: { title?: string; authorIds?: string[] } = {}) {
+  bookCounter += 1;
+  const [book] = await testDb
+    .insert(books)
+    .values({ title: title ?? `Book ${bookCounter}` })
+    .returning();
+  if (authorIds.length > 0) {
+    await testDb
+      .insert(bookAuthors)
+      .values(authorIds.map((authorId) => ({ bookId: book!.id, authorId })));
+  }
+  return book!;
 }

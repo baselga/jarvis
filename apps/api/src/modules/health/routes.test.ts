@@ -1,7 +1,7 @@
 import { HealthResponseSchema } from '@jarvis/schemas';
 import { describe, expect, it, vi } from 'vitest';
-import { buildApp } from '../app.js';
-import type { Db } from '../db/client.js';
+import { buildApp } from '../../app.js';
+import type { Db } from '../../db/client.js';
 
 // Solo /health usa la BD y solo llama a `execute`, así que basta con simular eso.
 function fakeDb(execute: () => Promise<unknown>) {

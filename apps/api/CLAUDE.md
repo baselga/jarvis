@@ -20,15 +20,17 @@ src/auth/          password.ts (argon2id), session.ts (crear/validar/borrar sesi
                    request-token.ts (token de Bearer o cookie, opciones de la cookie),
                    authenticate.ts (plugin `auth`: `app.authenticate`, `requireRole`).
 drizzle/           Migraciones SQL generadas por drizzle-kit, versionadas en git.
-src/routes/*.ts    Un plugin por grupo de rutas (`users.ts`: gestión de usuarios, solo admin).
+src/modules/<x>/   Una carpeta por entidad o grupo de rutas: `routes.ts` (plugin Fastify) y `routes.test.ts`
+                   (`health`, `auth`, `users`). Con lógica de datos propia llevará también `service.ts`.
+src/http-errors.ts notFound(msg) y conflict(msg): errores HTTP compartidos por los módulos.
 src/test/          Infra de tests: BD `_test` (env.ts, global-setup.ts, setup.ts) y helpers.
 ```
 
 ## Patrones
 
 - **Dependencias inyectadas en `buildApp()`** (hoy la BD): los tests pasan una simulada. Lo nuevo que dependa de algo externo entra por `BuildAppOptions`, no con imports globales.
-- **Rutas como plugin:** `export const xxxRoutes: FastifyPluginAsyncZod = async (app) => { ... }` en `routes/` y `app.register(...)` en `app.ts`. TypeScript infiere `body`/`params`/`query` y lo que se puede devolver a partir del `schema`: no anotes tipos a mano. (`require-await` está desactivada en `routes/**`, ver `eslint.config.js`).
-- **Cada ruta con `schema`:** `tags`, `summary`, `body`/`params`/`querystring` y `response` con **todos** los códigos que devuelve; los errores con `ErrorResponseSchema` de `@jarvis/schemas`. Ver `src/routes/health.ts`.
+- **Rutas como plugin:** `export const xxxRoutes: FastifyPluginAsyncZod = async (app) => { ... }` en `modules/<x>/routes.ts` y `app.register(...)` en `app.ts`. TypeScript infiere `body`/`params`/`query` y lo que se puede devolver a partir del `schema`: no anotes tipos a mano. (`require-await` está desactivada en `modules/**/routes.ts`, ver `eslint.config.js`).
+- **Cada ruta con `schema`:** `tags`, `summary`, `body`/`params`/`querystring` y `response` con **todos** los códigos que devuelve; los errores con `ErrorResponseSchema` de `@jarvis/schemas`. Ver `src/modules/health/routes.ts`.
 - **Rutas protegidas:** en el plugin de rutas, `app.addHook('onRequest', app.authenticate)` protege todo lo que registre (401 si no hay sesión válida; deja `request.user` y renueva la cookie). Por ruta, `preHandler: requireRole('admin', 'adult')` con la lista explícita de roles (403), sin jerarquía. En el `schema`: `security: sessionSecurity` y `response: { 200: X, ...authErrorResponses }` (solo `401` si no hay `requireRole`), ambos de `auth/authenticate.ts`. Si el plugin mezcla rutas públicas, `onRequest: app.authenticate` por ruta (como `/auth/me`).
 - **Se valida también la respuesta:** las claves que no estén en el esquema se eliminan en silencio (no se filtran, p. ej. `passwordHash`); si falta un campo o no encaja su tipo, 500. Si un `return` convive con `reply.send(...)`, usa `as const` en el literal para que TS no ensanche los enums.
 - **Documentación:** Swagger UI en `/docs`, documento OpenAPI en `/docs/json`, generados desde los esquemas Zod.
@@ -42,9 +44,9 @@ src/test/          Infra de tests: BD `_test` (env.ts, global-setup.ts, setup.ts
 - **Token de la petición:** `getRequestToken(request)`; si hay cabecera `Authorization`, manda ella y la cookie se ignora.
 - **Cuerpo vacío:** `buildApp` sustituye el parser de JSON: un cuerpo vacío con `Content-Type: application/json` llega como `undefined` (no 400). Así funcionan los POST sin cuerpo, como logout.
 - **Emails:** toda entrada de email usa `EmailSchema` de `@jarvis/schemas` (trim + minúsculas). El login busca el email tal cual: un alta sin normalizar crearía un usuario que no puede entrar.
-- **Conflictos de unicidad:** no se consulta antes si existe; se inserta/actualiza y, si `isUniqueViolation(error)` (`db/errors.ts`), se responde 409. La restricción `unique` de Postgres es la fuente de verdad y no hay carreras entre dos peticiones a la vez. Ver `routes/users.ts`.
+- **Conflictos de unicidad:** no se consulta antes si existe; se inserta/actualiza y, si `isUniqueViolation(error)` (`db/errors.ts`), se responde 409. La restricción `unique` de Postgres es la fuente de verdad y no hay carreras entre dos peticiones a la vez. Ver `modules/users/routes.ts`.
 - **Transacciones:** cuando varias escrituras deben aplicarse juntas o ninguna, `app.db.transaction(async (tx) => …)` y todas con `tx`; si algo lanza dentro, `ROLLBACK`. Las funciones que escriben y pueden ir dentro de una reciben `DbOrTx` (p. ej. `deleteUserSessions`).
-- **Ids de la URL:** `z.uuid()` acepta mayúsculas y Postgres compara uuid sin distinguirlas. Para comparar ids en JS (p. ej. «¿soy yo?»), usa el id leído de la BD, no el de `params`. Ver la autoprotección en `routes/users.ts`.
+- **Ids de la URL:** `z.uuid()` acepta mayúsculas y Postgres compara uuid sin distinguirlas. Para comparar ids en JS (p. ej. «¿soy yo?»), usa el id leído de la BD, no el de `params`. Ver la autoprotección en `modules/users/routes.ts`.
 - **Códigos HTTP con intención:** 503 si falla una dependencia (BD), no 500.
 
 ## Tests

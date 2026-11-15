@@ -10,11 +10,12 @@ import {
 import { eq } from 'drizzle-orm';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { authErrorResponses, requireRole, sessionSecurity } from '../auth/authenticate.js';
-import { hashPassword } from '../auth/password.js';
-import { deleteUserSessions } from '../auth/session.js';
-import { isUniqueViolation } from '../db/errors.js';
-import { users } from '../db/schema/index.js';
+import { authErrorResponses, requireRole, sessionSecurity } from '../../auth/authenticate.js';
+import { hashPassword } from '../../auth/password.js';
+import { deleteUserSessions } from '../../auth/session.js';
+import { isUniqueViolation } from '../../db/errors.js';
+import { users } from '../../db/schema/index.js';
+import { conflict, notFound } from '../../http-errors.js';
 
 // Columnas de `UserSchema`: el hash de la contraseña ni se lee.
 const userColumns = {
@@ -25,8 +26,7 @@ const userColumns = {
   active: users.active,
 };
 
-const notFound = { statusCode: 404, error: 'Not Found', message: 'Usuario no encontrado' } as const;
-const conflict = (message: string) => ({ statusCode: 409, error: 'Conflict', message }) as const;
+const userNotFound = notFound('Usuario no encontrado');
 const emailTaken = conflict('Ya existe un usuario con ese email');
 
 // Gestión de usuarios: todo solo para el admin.
@@ -72,7 +72,7 @@ export const userRoutes: FastifyPluginAsyncZod = async (app) => {
         .select(userColumns)
         .from(users)
         .where(eq(users.id, request.params.id));
-      if (!user) return reply.code(404).send(notFound);
+      if (!user) return reply.code(404).send(userNotFound);
       return user;
     },
   );
@@ -136,7 +136,7 @@ export const userRoutes: FastifyPluginAsyncZod = async (app) => {
       const changes = request.body;
 
       const [current] = await app.db.select(userColumns).from(users).where(eq(users.id, id));
-      if (!current) return reply.code(404).send(notFound);
+      if (!current) return reply.code(404).send(userNotFound);
 
       // Autoprotección: el admin no puede dejar la casa sin nadie que gestione
       // usuarios. Reenviar los mismos valores (formulario completo) sí vale.
@@ -162,7 +162,7 @@ export const userRoutes: FastifyPluginAsyncZod = async (app) => {
           return updated;
         });
         // Por si se borró entre la lectura y el UPDATE.
-        if (!user) return reply.code(404).send(notFound);
+        if (!user) return reply.code(404).send(userNotFound);
         return user;
       } catch (error) {
         if (isUniqueViolation(error)) return reply.code(409).send(emailTaken);
@@ -204,7 +204,7 @@ export const userRoutes: FastifyPluginAsyncZod = async (app) => {
         if (updated) await deleteUserSessions(tx, id);
         return updated !== undefined;
       });
-      if (!found) return reply.code(404).send(notFound);
+      if (!found) return reply.code(404).send(userNotFound);
       return reply.code(204).send(null);
     },
   );

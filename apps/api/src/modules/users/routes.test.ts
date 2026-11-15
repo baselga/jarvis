@@ -2,8 +2,8 @@ import { MeResponseSchema, type Role, UserListResponseSchema, UserSchema } from 
 import { eq } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { sessions, users } from '../db/schema/index.js';
-import { buildTestApp, createSession, createUser, testDb } from '../test/helpers.js';
+import { sessions, users } from '../../db/schema/index.js';
+import { buildTestApp, createSession, createUser, testDb } from '../../test/helpers.js';
 
 const PASSWORD = 'contraseña-segura';
 const UNKNOWN_ID = '00000000-0000-4000-8000-000000000000';

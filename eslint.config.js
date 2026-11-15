@@ -21,7 +21,7 @@ export default defineConfig(
   {
     // Los plugins de rutas son `async` por contrato de Fastify (FastifyPluginAsyncZod)
     // aunque solo registren rutas sin esperar nada.
-    files: ['apps/api/src/routes/**/*.ts'],
+    files: ['apps/api/src/modules/**/routes.ts'],
     rules: { '@typescript-eslint/require-await': 'off' },
   },
   {
