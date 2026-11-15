@@ -5,6 +5,7 @@ import { authPlugin } from './auth/authenticate.js';
 import type { Db } from './db/client.js';
 import { registerOpenApi } from './openapi.js';
 import { authRoutes } from './modules/auth/routes.js';
+import { authorRoutes } from './modules/authors/routes.js';
 import { healthRoutes } from './modules/health/routes.js';
 import { userRoutes } from './modules/users/routes.js';
 
@@ -51,5 +52,6 @@ export function buildApp({ logger = false, db, cookieSecure = false }: BuildAppO
   app.register(healthRoutes);
   app.register(authRoutes, { cookieSecure });
   app.register(userRoutes);
+  app.register(authorRoutes);
   return app;
 }

@@ -2,7 +2,7 @@
 
 | Campo  | Valor                       |
 | ------ | --------------------------- |
-| Estado | en curso                    |
+| Estado | terminada                   |
 | Tamaño | normal                      |
 | Fase   | 1                           |
 | Plan   | `docs/fases/fase-1-plan.md` |
@@ -105,33 +105,33 @@ Solo cambian las rutas de los imports (`../` → `../../`) y los imports de `app
 
 - [x] **9.1 — Piezas reutilizables:** `isForeignKeyViolation`, `containsPattern`, `http-errors.ts` (y `users.ts` lo usa), `PaginationQuerySchema`, helpers `createAuthor`/`createBook`. Deja el proyecto compilando y los tests existentes en verde. Tests: `isForeignKeyViolation` con `23001`, `23503` (directo y en `cause`) y otro código → `false`; `containsPattern` escapa `%`, `_` y `\`.
 - [x] **9.2 — Migrar `routes/` a `modules/`:** mover health, auth y users con sus tests (ver tabla «Migración»), actualizar imports, `app.ts`, glob de ESLint y las referencias en `apps/api/CLAUDE.md` y en las notas del plan; borrar `routes/`. Es un movimiento puro: no se modifica ninguna línea de lógica ni de test. Tests: ninguno nuevo; los 113+ existentes pasan sin cambios (typecheck, lint y tests en verde; `/docs` sigue sirviendo el mismo OpenAPI).
-- [ ] **9.3 — Módulo `authors`:** DTOs, `service.ts`, `routes.ts`, registro en `app.ts`, documentación del patrón. Tests: los de la sección «Tests» de rutas.
+- [x] **9.3 — Módulo `authors`:** DTOs, `service.ts`, `routes.ts`, registro en `app.ts`, documentación del patrón. Tests: los de la sección «Tests» de rutas.
 
 ## Tests
 
 En `modules/authors/routes.test.ts`, con `inject()` y Postgres real. Marcados **(obligatorio)** los de permisos.
 
 **Permisos (obligatorio, 9.3)**
-- [ ] sin token, las cinco rutas → 401
-- [ ] invitado hace GET `/authors` y GET `/authors/:id` → 200
-- [ ] invitado hace POST, PATCH y DELETE → 403 y el autor no cambia ni se borra
-- [ ] adulto y admin crean, editan y borran → 201 / 200 / 204
+- [x] sin token, las cinco rutas → 401
+- [x] invitado hace GET `/authors` y GET `/authors/:id` → 200
+- [x] invitado hace POST, PATCH y DELETE → 403 y el autor no cambia ni se borra
+- [x] adulto y admin crean, editan y borran → 201 / 200 / 204
 
 **CRUD**
-- [ ] POST crea el autor, recorta espacios del nombre y devuelve 201 con `id` y `name`
-- [ ] POST con nombre vacío o solo espacios → 400
-- [ ] POST con un nombre que solo difiere en mayúsculas de uno existente → 409
-- [ ] GET `/authors/:id` inexistente → 404; con id mal formado → 400
-- [ ] PATCH cambia el nombre; a un nombre ya usado por otro → 409; al mismo nombre o cambiando solo mayúsculas del propio → 200; inexistente → 404
-- [ ] DELETE de un autor sin libros → 204 y GET posterior → 404; inexistente → 404
-- [ ] DELETE de un autor con libros → 409, el autor sigue existiendo y el libro sigue vinculado
+- [x] POST crea el autor, recorta espacios del nombre y devuelve 201 con `id` y `name`
+- [x] POST con nombre vacío o solo espacios → 400
+- [x] POST con un nombre que solo difiere en mayúsculas de uno existente → 409
+- [x] GET `/authors/:id` inexistente → 404; con id mal formado → 400
+- [x] PATCH cambia el nombre; a un nombre ya usado por otro → 409; al mismo nombre o cambiando solo mayúsculas del propio → 200; inexistente → 404
+- [x] DELETE de un autor sin libros → 204 y GET posterior → 404; inexistente → 404
+- [x] DELETE de un autor con libros → 409, el autor sigue existiendo y el libro sigue vinculado
 
 **Listado**
-- [ ] ordenado por nombre, con `total`
-- [ ] `q` filtra sin distinguir mayúsculas y `total` cuenta solo los coincidentes
-- [ ] `q=%` o `q=_` solo coincide con nombres que contienen ese carácter literal
-- [ ] `limit` y `offset` paginan sin repetir ni saltar (con `total` constante)
-- [ ] `limit=201`, `limit=0` u `offset=-1` → 400
+- [x] ordenado por nombre, con `total`
+- [x] `q` filtra sin distinguir mayúsculas y `total` cuenta solo los coincidentes
+- [x] `q=%` o `q=_` solo coincide con nombres que contienen ese carácter literal
+- [x] `limit` y `offset` paginan sin repetir ni saltar (con `total` constante)
+- [x] `limit=201`, `limit=0` u `offset=-1` → 400
 
 **Migración (9.2):** sin tests nuevos; sirve de prueba que los de users, auth y health pasan idénticos desde su nueva ubicación.
 
@@ -172,6 +172,40 @@ En `modules/authors/routes.test.ts`, con `inject()` y Postgres real. Marcados **
 - Quedan menciones a `routes/*.ts` solo en archivos históricos (`fase-0.md`, `tarea-3.md`, `tarea-6.md`, y un ejemplo en la skill `jarvis-finish`); no los toqué.
 - Verificado: format, typecheck y lint sin errores; 120 tests en verde (los mismos que antes, `openapi.test.ts` incluido).
 
+**9.3 — Módulo `authors`**
+- Creados: `modules/authors/service.ts`, `routes.ts`, `routes.test.ts` (25 tests). Modificados: `packages/schemas/src/author.ts` (DTOs), `app.ts` (registro), `apps/api/CLAUDE.md` (estructura, `db/errors`/`db/search`, patrones «Módulos» y «Listados», eliminado «Pendiente de decidir»).
+- Tests de permisos escritos primero y comprobados en rojo (404 por no existir las rutas); el resto al final.
+- `UpdateAuthorRequestSchema` es el mismo objeto que `CreateAuthorRequestSchema` (alias), no un `z.object` duplicado.
+- Los tests de `q` evitan nombres que solo difieren en mayúsculas al comprobar el orden: ese orden depende de la collation de la BD (probé `Isaac`/`ISAAC` y salió en orden distinto al esperado); lo que garantiza el servicio es `name, id`, no una collation concreta.
+- Para revisar con atención: el `switch` sin `default` en las rutas (el tipo de retorno es exhaustivo) y que `deleteAuthor` traduce a `has_books` cualquier `23001`/`23503` (hoy solo puede venir de `book_authors`).
+- Verificado: format, typecheck y lint sin errores; 145 tests en verde.
+
+**Mejoras de la revisión (R1 y R2)**
+- Modificado solo `modules/authors/routes.test.ts`: R1 → test `it.each(['PATCH', 'DELETE'])` con `/authors/no-es-un-uuid` → 400; R2 → `'?q='` y `'?q=%20'` añadidos al `it.each` de 400 del listado (queda fijado el contrato: `q` vacío es 400, no «sin filtro»).
+- Sin desviaciones ni cambios de código de producción. Verificado: format, typecheck y lint sin errores; 149 tests en verde.
+
 ## Revisión
 
+Resultado: lista para terminar (segunda vuelta: R1 y R2 aplicadas y comprobadas; format, typecheck, lint y 149 tests en verde).
+
+- [x] (aceptada) **R1 · recomendable · `modules/authors/routes.test.ts` (bloque `CRUD`)** — la especificación da 400 por id mal formado en `GET`, `PATCH` y `DELETE`, pero solo se prueba en `GET` → añadir un test que haga `PATCH` y `DELETE` a `/authors/no-es-un-uuid` y espere 400. Los tres comparten `AuthorIdParamsSchema`, pero si alguien lo quitara de una ruta (ver el 500 de Postgres por uuid inválido) ningún test fallaría.
+- [x] (aceptada) **R2 · opcional · `modules/authors/routes.test.ts` (bloque `listado`)** — `q` vacío o solo espacios (`?q=`, `?q=%20`) da 400 por `min(1)` y no está probado → añadir `'?q='` y `'?q=%20'` al `it.each` de 400, o decidir que `q` vacío equivale a «sin filtro». Es una decisión de contrato que el futuro front (caja de búsqueda vacía) va a tocar; mejor dejarla fijada con un test.
+
+Segunda vuelta: sin propuestas nuevas. El test de `PATCH`/`DELETE` con id mal formado (R1) y los casos `?q=` y `?q=%20` (R2) están en `routes.test.ts` y pasan; solo se tocó ese archivo.
+
+Comprobado sin hallazgos (primera vuelta): permisos en la API (`onRequest` autenticado + `requireRole` en escritura), códigos 400/404/409 y mensajes, `switch` exhaustivo sin `default`, `deleteAuthor` traduce `23001`/`23503` a `has_books` (hoy solo puede venir de `book_authors`), `createBook` inserta en `book_authors` solo si hay `authorIds`, escape de `%`, `_` y `\`, orden `name, id`, sin datos sensibles en respuestas, DTOs desde `@jarvis/schemas` sin duplicar, `CLAUDE.md` de la app al día.
+
 ## Cierre
+
+**Documentado**
+- `apps/api/CLAUDE.md`: estructura (`modules/`, `http-errors.ts`, `db/errors.ts`, `db/search.ts`), patrones «Módulos (ruta → servicio → resultado explícito)» y «Listados con búsqueda y paginación»; eliminado «Pendiente de decidir». Hecho durante 9.2 y 9.3.
+- `fase-1-plan.md`: tarea 9 marcada `[x]` y nota con el patrón de referencia, las piezas reutilizables y el contrato de `q` vacío.
+- Sin cambios en `docs/dominio.md` (las reglas de autores ya estaban) ni en `.env.example` (sin variables nuevas).
+
+**Deuda y pendientes**
+- Tarea 10: valorar un CRUD genérico para entidades con solo `name` (géneros y sagas) antes de copiar `authors` dos veces.
+- Tarea 11: usar `isForeignKeyViolation` para ids de autor/género inexistentes (→ 400) y `DbOrTx` en la transacción del alta; añadir el test pendiente de `SagaOrderSchema`.
+- Tarea 12: valorar índices para `ILIKE` solo si el listado de libros lo necesita.
+- Web (tareas 17-18): omitir `q` cuando la caja de búsqueda esté vacía (la API responde 400).
+- `users`, `auth` y `health` siguen sin `service.ts`; se extraerá solo si crecen.
+

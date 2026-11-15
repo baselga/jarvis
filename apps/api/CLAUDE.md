@@ -10,7 +10,8 @@ src/app.ts         buildApp(): crea la instancia Fastify y registra rutas. Sin p
 src/openapi.ts     registerOpenApi(): @fastify/swagger + Swagger UI en /docs (antes que las rutas).
 src/config.ts      Variables de entorno validadas con Zod (fail fast).
 src/db/client.ts   createDb(): pool `postgres` + Drizzle (con el esquema). Tipos `Db` y `DbOrTx`.
-src/db/errors.ts   isUniqueViolation(error): detecta el `23505` de Postgres.
+src/db/errors.ts   isUniqueViolation / isForeignKeyViolation: detectan los códigos de Postgres (`23505`; `23001` y `23503`).
+src/db/search.ts   containsPattern(q): patrón `ILIKE` «contiene q» con `%`, `_` y `\` escapados.
 src/db/schema/     Tablas Drizzle, un archivo por bloque (`users.ts`, `library.ts`); `index.ts` reexporta.
 src/db/run-migrations.ts  runMigrations(url): la usan `migrate.ts` y el setup de tests.
 src/db/migrate.ts  Aplica las migraciones pendientes (`pnpm db:migrate`; `dev` lo ejecuta al arrancar).
@@ -21,7 +22,8 @@ src/auth/          password.ts (argon2id), session.ts (crear/validar/borrar sesi
                    authenticate.ts (plugin `auth`: `app.authenticate`, `requireRole`).
 drizzle/           Migraciones SQL generadas por drizzle-kit, versionadas en git.
 src/modules/<x>/   Una carpeta por entidad o grupo de rutas: `routes.ts` (plugin Fastify) y `routes.test.ts`
-                   (`health`, `auth`, `users`). Con lógica de datos propia llevará también `service.ts`.
+                   (`health`, `auth`, `users`, `authors`). Con lógica de datos propia lleva también `service.ts`
+                   (`authors` es el patrón de referencia).
 src/http-errors.ts notFound(msg) y conflict(msg): errores HTTP compartidos por los módulos.
 src/test/          Infra de tests: BD `_test` (env.ts, global-setup.ts, setup.ts) y helpers.
 ```
@@ -47,6 +49,8 @@ src/test/          Infra de tests: BD `_test` (env.ts, global-setup.ts, setup.ts
 - **Conflictos de unicidad:** no se consulta antes si existe; se inserta/actualiza y, si `isUniqueViolation(error)` (`db/errors.ts`), se responde 409. La restricción `unique` de Postgres es la fuente de verdad y no hay carreras entre dos peticiones a la vez. Ver `modules/users/routes.ts`.
 - **Transacciones:** cuando varias escrituras deben aplicarse juntas o ninguna, `app.db.transaction(async (tx) => …)` y todas con `tx`; si algo lanza dentro, `ROLLBACK`. Las funciones que escriben y pueden ir dentro de una reciben `DbOrTx` (p. ej. `deleteUserSessions`).
 - **Ids de la URL:** `z.uuid()` acepta mayúsculas y Postgres compara uuid sin distinguirlas. Para comparar ids en JS (p. ej. «¿soy yo?»), usa el id leído de la BD, no el de `params`. Ver la autoprotección en `modules/users/routes.ts`.
+- **Módulos (ruta → servicio → resultado explícito):** la ruta valida (Zod), comprueba permisos y traduce a HTTP; `service.ts` son funciones sueltas `fn(db: DbOrTx, ...)` con el SQL, sin conocer HTTP. El servicio devuelve una unión discriminada (`{ status: 'ok', ... } | { status: 'not_found' } | { status: 'name_taken' }`…) y traduce ahí los códigos de Postgres (`isUniqueViolation`, `isForeignKeyViolation`); la ruta hace un `switch` exhaustivo sobre `status` y responde 404/409. Ver `modules/authors/`. Los `notFound`/`conflict` de `http-errors.ts` se definen como constantes del módulo. `users`, `auth` y `health` no tienen `service.ts` (su SQL está en la ruta); no se migran salvo que crezcan.
+- **Listados con búsqueda y paginación:** query con `PaginationQuerySchema` (`limit` 1–200, def. 50; `offset`; `z.coerce` porque la query llega como texto) más `q`; respuesta `{ <entidad>s, total }` con `total` sobre el mismo `where` sin `limit`/`offset`. Ordena siempre por el campo y luego por `id` (desempate estable). `q` con `ilike(col, containsPattern(q))`.
 - **Códigos HTTP con intención:** 503 si falla una dependencia (BD), no 500.
 
 ## Tests
@@ -57,7 +61,3 @@ src/test/          Infra de tests: BD `_test` (env.ts, global-setup.ts, setup.ts
 - Cada test empieza con las tablas vacías (`beforeEach` en `src/test/setup.ts`): crea lo que necesites en el propio test.
 - Sin paralelismo entre archivos (comparten BD).
 - Ejecutar: `pnpm --filter @jarvis/api test` (Postgres levantado).
-
-## Pendiente de decidir (fase 1)
-
-Estructura de módulos cuando haya varias entidades (tarea 9).

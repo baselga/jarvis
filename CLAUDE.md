@@ -5,7 +5,7 @@ Asistente doméstico tipo Alexa con IA, alojado en un servidor en casa. Proyecto
 Objetivos, arquitectura y fases completos: `docs/PLAN.md` (léelo solo al empezar una fase, no en cada tarea).
 Estado del proyecto: `docs/fases/fase-N.md` (un resumen por fase terminada).
 Fase activa: 1 (plan: `docs/fases/fase-1-plan.md`)
-Tarea activa: 9 (`docs/fases/fase-1/tarea-9.md`)
+Tarea activa: ninguna (siguiente: 10)
 
 ## Forma de trabajar
 
