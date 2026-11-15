@@ -7,9 +7,10 @@ import {
 import { eq } from 'drizzle-orm';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
+import { sessionSecurity } from '../auth/authenticate.js';
 import { hashPassword, verifyPassword } from '../auth/password.js';
 import { SESSION_COOKIE, getRequestToken, sessionCookieOptions } from '../auth/request-token.js';
-import { createSession, deleteSession, validateSession } from '../auth/session.js';
+import { createSession, deleteSession } from '../auth/session.js';
 import { users } from '../db/schema/index.js';
 
 export interface AuthRoutesOptions {
@@ -27,9 +28,6 @@ function getDummyHash() {
 
 const unauthorized = (message: string) =>
   ({ statusCode: 401, error: 'Unauthorized', message }) as const;
-
-// Cualquiera de los dos esquemas de `openapi.ts` sirve (Bearer o cookie).
-const sessionSecurity: Record<string, string[]>[] = [{ bearerAuth: [] }, { cookieAuth: [] }];
 
 export const authRoutes: FastifyPluginAsyncZod<AuthRoutesOptions> = async (
   app,
@@ -86,6 +84,8 @@ export const authRoutes: FastifyPluginAsyncZod<AuthRoutesOptions> = async (
   app.get(
     '/auth/me',
     {
+      // Por ruta y no por plugin: este plugin también tiene `/auth/login`, que es pública.
+      onRequest: app.authenticate,
       schema: {
         tags: ['auth'],
         summary: 'Usuario de la sesión actual',
@@ -93,16 +93,6 @@ export const authRoutes: FastifyPluginAsyncZod<AuthRoutesOptions> = async (
         response: { 200: MeResponseSchema, 401: ErrorResponseSchema },
       },
     },
-    async (request, reply) => {
-      const requestToken = getRequestToken(request);
-      const session = requestToken && (await validateSession(app.db, requestToken.token));
-      if (!session) return reply.code(401).send(unauthorized('No autenticado'));
-
-      // Al renovar, el navegador necesita la cookie con el nuevo Max-Age; el Bearer no.
-      if (session.renewed && requestToken.source === 'cookie') {
-        reply.setCookie(SESSION_COOKIE, requestToken.token, cookieOptions);
-      }
-      return { user: session.user };
-    },
+    async (request) => ({ user: request.user }),
   );
 };

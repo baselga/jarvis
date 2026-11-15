@@ -30,7 +30,7 @@ Tres bloques, cada uno usable y revisable por separado: **1a** auth y usuarios, 
 3. [x] **OpenAPI:** type provider de Zod, `@fastify/swagger` + UI en `/docs`, `/health` migrado al nuevo patrón.
 4. [x] **Contraseñas y seed:** helper de hash/verificación con argon2 y script `db:seed` que crea el admin desde `.env` si no existe. Tests: hash y verificación.
 5. [x] **Login, logout y `/auth/me`:** crear sesión, cookie, expiración y renovación, cierre de sesión. Tests: credenciales malas → 401, usuario desactivado → 401, sesión caducada → 401, logout invalida el token, Bearer y cookie funcionan.
-6. [ ] **Autorización:** `authenticate` y `requireRole`. Tests: sin token → 401, rol insuficiente → 403.
+6. [x] **Autorización:** `authenticate` y `requireRole`. Tests: sin token → 401, rol insuficiente → 403.
 7. [ ] **Gestión de usuarios (admin):** listar, crear, editar (nombre, rol, activo), resetear contraseña; cambiar la propia contraseña (cualquiera salvo invitado). Tests: solo admin gestiona, adulto e invitado → 403, desactivar invalida sesiones.
 
 ### 1b — Biblioteca
@@ -72,3 +72,4 @@ Tres bloques, cada uno usable y revisable por separado: **1a** auth y usuarios, 
 - OpenAPI (tarea 3): patrón de rutas en `apps/api/src/routes/health.ts`; errores con `ErrorResponseSchema` de `@jarvis/schemas`; `securitySchemes` pendiente para la tarea 5/6. ESLint desactiva `require-await` solo en `apps/api/src/routes/**`: si la tarea 9 mueve las rutas, actualizar ese glob en `eslint.config.js`.
 - Contraseñas (tarea 4): `hashPassword`/`verifyPassword` en `apps/api/src/auth/password.ts` (`verifyPassword` da `false` con hash malformado); `PasswordSchema` en `@jarvis/schemas` para la tarea 7; `createUser({ password })` para tests con login. Deuda: el seed (`db:seed`) no se ejecuta en la imagen `prod`.
 - Sesiones (tarea 5): la tarea 6 construye `authenticate` sobre `getRequestToken` + `validateSession` (`apps/api/src/auth/`) y añade `security` a las rutas en OpenAPI (los `securitySchemes` `bearerAuth`/`cookieAuth` ya existen). La tarea 7 usa `EmailSchema` en el alta. Deuda: no hay límite de intentos de login (`@fastify/rate-limit`).
+- Autorización (tarea 6): patrón «Rutas protegidas» en `apps/api/CLAUDE.md` (`app.authenticate` como hook del plugin, `requireRole(...)` por ruta, `sessionSecurity` + `authErrorResponses` en el `schema`); referencia en `apps/api/src/auth/authenticate.test.ts`. Deuda: si la BD cae, las rutas protegidas dan 500, no 503 (falta un `setErrorHandler` global).

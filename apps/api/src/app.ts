@@ -1,6 +1,7 @@
 import cookie from '@fastify/cookie';
 import Fastify, { type FastifyServerOptions } from 'fastify';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
+import { authPlugin } from './auth/authenticate.js';
 import type { Db } from './db/client.js';
 import { registerOpenApi } from './openapi.js';
 import { authRoutes } from './routes/auth.js';
@@ -45,6 +46,7 @@ export function buildApp({ logger = false, db, cookieSecure = false }: BuildAppO
   });
   registerOpenApi(app);
   app.register(cookie);
+  app.register(authPlugin, { cookieSecure });
   app.register(healthRoutes);
   app.register(authRoutes, { cookieSecure });
   return app;
