@@ -10,6 +10,13 @@ Glosario de quién vive en casa, qué datos guarda Jarvis y qué reglas se aplic
 
 No hay registro: el primer admin se crea al instalar y él da de alta al resto. Un usuario no se borra, se **desactiva** (no puede entrar y se cierran sus sesiones, pero se conserva su historial).
 
+Reglas de usuarios:
+
+- El admin no puede quitarse su propio rol ni desactivarse: así la casa nunca se queda sin nadie que gestione usuarios.
+- Cambiar el rol de alguien no le cierra la sesión: el cambio se aplica en su siguiente petición.
+- Si el admin resetea la contraseña de alguien, se cierran todas sus sesiones (en todos sus dispositivos).
+- Si alguien cambia su propia contraseña, se cierran sus otras sesiones y sigue dentro en la que lo ha hecho.
+
 | Acción | admin | adulto | invitado |
 |---|---|---|---|
 | Ver libros, autores, géneros, sagas y préstamos | ✅ | ✅ | ✅ |

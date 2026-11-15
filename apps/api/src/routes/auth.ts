@@ -1,4 +1,5 @@
 import {
+  ChangePasswordRequestSchema,
   ErrorResponseSchema,
   LoginRequestSchema,
   LoginResponseSchema,
@@ -7,10 +8,10 @@ import {
 import { eq } from 'drizzle-orm';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { sessionSecurity } from '../auth/authenticate.js';
+import { authErrorResponses, requireRole, sessionSecurity } from '../auth/authenticate.js';
 import { hashPassword, verifyPassword } from '../auth/password.js';
 import { SESSION_COOKIE, getRequestToken, sessionCookieOptions } from '../auth/request-token.js';
-import { createSession, deleteSession } from '../auth/session.js';
+import { createSession, deleteSession, deleteUserSessions } from '../auth/session.js';
 import { users } from '../db/schema/index.js';
 
 export interface AuthRoutesOptions {
@@ -28,6 +29,13 @@ function getDummyHash() {
 
 const unauthorized = (message: string) =>
   ({ statusCode: 401, error: 'Unauthorized', message }) as const;
+
+// 400 y no 401: la sesión es válida, y la web trata todo 401 como «sesión caducada».
+const wrongCurrentPassword = {
+  statusCode: 400,
+  error: 'Bad Request',
+  message: 'La contraseña actual no es correcta',
+} as const;
 
 export const authRoutes: FastifyPluginAsyncZod<AuthRoutesOptions> = async (
   app,
@@ -94,5 +102,46 @@ export const authRoutes: FastifyPluginAsyncZod<AuthRoutesOptions> = async (
       },
     },
     async (request) => ({ user: request.user }),
+  );
+
+  app.put(
+    '/auth/password',
+    {
+      onRequest: app.authenticate,
+      preHandler: requireRole('admin', 'adult'),
+      schema: {
+        tags: ['auth'],
+        summary: 'Cambia la contraseña propia y cierra las demás sesiones',
+        security: sessionSecurity,
+        body: ChangePasswordRequestSchema,
+        response: {
+          204: z.null().describe('Sin cuerpo'),
+          400: ErrorResponseSchema,
+          ...authErrorResponses,
+        },
+      },
+    },
+    async (request, reply) => {
+      const { currentPassword, newPassword } = request.body;
+      const userId = request.user.id;
+
+      const [user] = await app.db
+        .select({ passwordHash: users.passwordHash })
+        .from(users)
+        .where(eq(users.id, userId));
+      if (!user || !(await verifyPassword(user.passwordHash, currentPassword))) {
+        return reply.code(400).send(wrongCurrentPassword);
+      }
+
+      const passwordHash = await hashPassword(newPassword);
+      // Tras `authenticate` el token existe. Se conserva la sesión actual: quien
+      // cambia su contraseña sigue dentro y los demás dispositivos salen.
+      const { token } = getRequestToken(request)!;
+      await app.db.transaction(async (tx) => {
+        await tx.update(users).set({ passwordHash }).where(eq(users.id, userId));
+        await deleteUserSessions(tx, userId, { exceptToken: token });
+      });
+      return reply.code(204).send(null);
+    },
   );
 };

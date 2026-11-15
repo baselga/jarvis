@@ -6,6 +6,7 @@ import type { Db } from './db/client.js';
 import { registerOpenApi } from './openapi.js';
 import { authRoutes } from './routes/auth.js';
 import { healthRoutes } from './routes/health.js';
+import { userRoutes } from './routes/users.js';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -49,5 +50,6 @@ export function buildApp({ logger = false, db, cookieSecure = false }: BuildAppO
   app.register(authPlugin, { cookieSecure });
   app.register(healthRoutes);
   app.register(authRoutes, { cookieSecure });
+  app.register(userRoutes);
   return app;
 }

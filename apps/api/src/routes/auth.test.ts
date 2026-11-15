@@ -227,3 +227,83 @@ describe('POST /auth/logout', () => {
     expect((await me(bearer(other.token))).statusCode).toBe(200);
   });
 });
+
+describe('PUT /auth/password', () => {
+  const NEW_PASSWORD = 'contraseña-nueva';
+
+  function changePassword(token: string | undefined, payload: object) {
+    return app.inject({
+      method: 'PUT',
+      url: '/auth/password',
+      headers: token === undefined ? {} : bearer(token),
+      payload,
+    });
+  }
+
+  it('sin token responde 401 y un invitado recibe 403', async () => {
+    const guest = await createUser({ role: 'guest' });
+    const { token } = await createSession(guest.id);
+    const payload = { currentPassword: PASSWORD, newPassword: NEW_PASSWORD };
+
+    expect((await changePassword(undefined, payload)).statusCode).toBe(401);
+    expect((await changePassword(token, payload)).statusCode).toBe(403);
+  });
+
+  it('cambia la contraseña: la nueva vale en login y la antigua no', async () => {
+    await createUser({ email: 'ana@test.local', password: PASSWORD });
+    const { token } = LoginResponseSchema.parse((await login('ana@test.local')).json());
+
+    const res = await changePassword(token, {
+      currentPassword: PASSWORD,
+      newPassword: NEW_PASSWORD,
+    });
+
+    expect(res.statusCode).toBe(204);
+    expect(res.body).toBe('');
+    expect((await login('ana@test.local', NEW_PASSWORD)).statusCode).toBe(200);
+    expect((await login('ana@test.local', PASSWORD)).statusCode).toBe(401);
+  });
+
+  it('conserva la sesión actual y cierra las demás', async () => {
+    const user = await createUser({ password: PASSWORD });
+    const current = await createSession(user.id);
+    const other = await createSession(user.id);
+
+    const res = await changePassword(current.token, {
+      currentPassword: PASSWORD,
+      newPassword: NEW_PASSWORD,
+    });
+
+    expect(res.statusCode).toBe(204);
+    expect((await me(bearer(current.token))).statusCode).toBe(200);
+    expect((await me(bearer(other.token))).statusCode).toBe(401);
+  });
+
+  it('con la contraseña actual incorrecta responde 400 y no la cambia', async () => {
+    const user = await createUser({ password: PASSWORD });
+    const { token } = await createSession(user.id);
+
+    const res = await changePassword(token, {
+      currentPassword: 'otra-contraseña',
+      newPassword: NEW_PASSWORD,
+    });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toEqual({
+      statusCode: 400,
+      error: 'Bad Request',
+      message: 'La contraseña actual no es correcta',
+    });
+    const [stored] = await testDb.select().from(users).where(eq(users.id, user.id));
+    expect(stored?.passwordHash).toBe(user.passwordHash);
+  });
+
+  it('con una contraseña nueva de 7 caracteres responde 400', async () => {
+    const user = await createUser({ password: PASSWORD });
+    const { token } = await createSession(user.id);
+
+    const res = await changePassword(token, { currentPassword: PASSWORD, newPassword: '1234567' });
+
+    expect(res.statusCode).toBe(400);
+  });
+});

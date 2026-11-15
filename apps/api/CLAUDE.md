@@ -9,7 +9,8 @@ src/server.ts      Arranque: lee config, crea la BD, escucha y cierra limpio (SI
 src/app.ts         buildApp(): crea la instancia Fastify y registra rutas. Sin puerto.
 src/openapi.ts     registerOpenApi(): @fastify/swagger + Swagger UI en /docs (antes que las rutas).
 src/config.ts      Variables de entorno validadas con Zod (fail fast).
-src/db/client.ts   createDb(): pool `postgres` + Drizzle (con el esquema).
+src/db/client.ts   createDb(): pool `postgres` + Drizzle (con el esquema). Tipos `Db` y `DbOrTx`.
+src/db/errors.ts   isUniqueViolation(error): detecta el `23505` de Postgres.
 src/db/schema/     Tablas Drizzle, un archivo por bloque (`users.ts`); `index.ts` reexporta.
 src/db/run-migrations.ts  runMigrations(url): la usan `migrate.ts` y el setup de tests.
 src/db/migrate.ts  Aplica las migraciones pendientes (`pnpm db:migrate`; `dev` lo ejecuta al arrancar).
@@ -19,7 +20,7 @@ src/auth/          password.ts (argon2id), session.ts (crear/validar/borrar sesi
                    request-token.ts (token de Bearer o cookie, opciones de la cookie),
                    authenticate.ts (plugin `auth`: `app.authenticate`, `requireRole`).
 drizzle/           Migraciones SQL generadas por drizzle-kit, versionadas en git.
-src/routes/*.ts    Un plugin por grupo de rutas.
+src/routes/*.ts    Un plugin por grupo de rutas (`users.ts`: gestión de usuarios, solo admin).
 src/test/          Infra de tests: BD `_test` (env.ts, global-setup.ts, setup.ts) y helpers.
 ```
 
@@ -40,6 +41,9 @@ src/test/          Infra de tests: BD `_test` (env.ts, global-setup.ts, setup.ts
 - **Token de la petición:** `getRequestToken(request)`; si hay cabecera `Authorization`, manda ella y la cookie se ignora.
 - **Cuerpo vacío:** `buildApp` sustituye el parser de JSON: un cuerpo vacío con `Content-Type: application/json` llega como `undefined` (no 400). Así funcionan los POST sin cuerpo, como logout.
 - **Emails:** toda entrada de email usa `EmailSchema` de `@jarvis/schemas` (trim + minúsculas). El login busca el email tal cual: un alta sin normalizar crearía un usuario que no puede entrar.
+- **Conflictos de unicidad:** no se consulta antes si existe; se inserta/actualiza y, si `isUniqueViolation(error)` (`db/errors.ts`), se responde 409. La restricción `unique` de Postgres es la fuente de verdad y no hay carreras entre dos peticiones a la vez. Ver `routes/users.ts`.
+- **Transacciones:** cuando varias escrituras deben aplicarse juntas o ninguna, `app.db.transaction(async (tx) => …)` y todas con `tx`; si algo lanza dentro, `ROLLBACK`. Las funciones que escriben y pueden ir dentro de una reciben `DbOrTx` (p. ej. `deleteUserSessions`).
+- **Ids de la URL:** `z.uuid()` acepta mayúsculas y Postgres compara uuid sin distinguirlas. Para comparar ids en JS (p. ej. «¿soy yo?»), usa el id leído de la BD, no el de `params`. Ver la autoprotección en `routes/users.ts`.
 - **Códigos HTTP con intención:** 503 si falla una dependencia (BD), no 500.
 
 ## Tests

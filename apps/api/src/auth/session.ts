@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
-import { and, eq, lte } from 'drizzle-orm';
-import type { Db } from '../db/client.js';
+import { and, eq, lte, ne } from 'drizzle-orm';
+import type { Db, DbOrTx } from '../db/client.js';
 import { sessions, users } from '../db/schema/index.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -61,4 +61,22 @@ export async function validateSession(db: Db, token: string, now = new Date()) {
 // Idempotente: borrar una sesión que no existe no es un error.
 export async function deleteSession(db: Db, token: string) {
   await db.delete(sessions).where(eq(sessions.id, hashSessionToken(token)));
+}
+
+// Cierra las sesiones de un usuario (al desactivarlo o cambiar su contraseña),
+// salvo la de `exceptToken` si se indica. Acepta una `tx` para borrar en la
+// misma transacción que el cambio que lo provoca.
+export async function deleteUserSessions(
+  db: DbOrTx,
+  userId: string,
+  { exceptToken }: { exceptToken?: string } = {},
+) {
+  await db
+    .delete(sessions)
+    .where(
+      and(
+        eq(sessions.userId, userId),
+        exceptToken === undefined ? undefined : ne(sessions.id, hashSessionToken(exceptToken)),
+      ),
+    );
 }

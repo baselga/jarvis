@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
+import type { PgDatabase } from 'drizzle-orm/pg-core';
+import { type PostgresJsQueryResultHKT, drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './schema/index.js';
 
@@ -12,3 +13,7 @@ export function createDb(url: string) {
 }
 
 export type Db = ReturnType<typeof createDb>['db'];
+
+// Lo que tienen en común `Db` y la `tx` de `db.transaction(async (tx) => …)`:
+// las funciones que lo aceptan sirven dentro y fuera de una transacción.
+export type DbOrTx = PgDatabase<PostgresJsQueryResultHKT, typeof schema>;
