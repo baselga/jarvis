@@ -4,6 +4,7 @@ import type { DbOrTx } from '../../db/client.js';
 import { isForeignKeyViolation, isUniqueViolation } from '../../db/errors.js';
 import { books, sagas } from '../../db/schema/index.js';
 import { containsPattern } from '../../db/search.js';
+import { bookColumns } from '../books/service.js';
 
 const sagaColumns = { id: sagas.id, name: sagas.name };
 
@@ -36,18 +37,6 @@ async function getSagaFlat(db: DbOrTx, id: string): Promise<Saga | undefined> {
   const [saga] = await db.select(sagaColumns).from(sagas).where(eq(sagas.id, id));
   return saga;
 }
-
-const bookColumns = {
-  id: books.id,
-  title: books.title,
-  sagaId: books.sagaId,
-  sagaOrder: books.sagaOrder,
-  isbn: books.isbn,
-  year: books.year,
-  language: books.language,
-  location: books.location,
-  notes: books.notes,
-};
 
 // Dos consultas en vez de un JOIN: así la saga no se repite en cada fila de libro.
 // Los libros sin orden van al final; título e id desempatan (p. ej. una edición ómnibus

@@ -1,4 +1,4 @@
-import type { BookDetail, Role } from '@jarvis/schemas';
+import type { BookDetail, BookListResponse, Role } from '@jarvis/schemas';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
@@ -43,9 +43,10 @@ async function headersFor(role: Role) {
 }
 
 describe('permisos de /books', () => {
-  it('sin token las cuatro rutas responden 401', async () => {
+  it('sin token las cinco rutas responden 401', async () => {
     const book = await createBook();
     const requests = [
+      { method: 'GET', url: '/books' },
       { method: 'GET', url: `/books/${book.id}` },
       { method: 'POST', url: '/books', payload: { title: 'Nuevo' } },
       { method: 'PATCH', url: `/books/${book.id}`, payload: { title: 'Cambiado' } },
@@ -65,6 +66,16 @@ describe('permisos de /books', () => {
     const response = await app.inject({ method: 'GET', url: `/books/${book.id}`, headers });
 
     expect(response.statusCode).toBe(200);
+  });
+
+  it.each<Role>(['admin', 'adult', 'guest'])('%s puede leer el listado', async (role) => {
+    const headers = await headersFor(role);
+    const book = await createBook();
+
+    const response = await app.inject({ method: 'GET', url: '/books', headers });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json<BookListResponse>().books.map((b) => b.id)).toEqual([book.id]);
   });
 
   it('un invitado no puede crear, editar ni borrar, y no cambia nada', async () => {
@@ -109,6 +120,195 @@ describe('permisos de /books', () => {
     const del = await app.inject({ method: 'DELETE', url: `/books/${id}`, headers });
 
     expect([post.statusCode, patch.statusCode, del.statusCode]).toEqual([201, 200, 204]);
+  });
+});
+
+describe('GET /books', () => {
+  async function list(query: Record<string, string> = {}) {
+    const headers = await headersFor('adult');
+    return app.inject({ method: 'GET', url: '/books', query, headers });
+  }
+
+  // Títulos de los libros de la respuesta, en su orden.
+  async function titles(query: Record<string, string>) {
+    const response = await list(query);
+    expect(response.statusCode).toBe(200);
+    return response.json<BookListResponse>().books.map((book) => book.title);
+  }
+
+  it('sin libros devuelve una lista vacía', async () => {
+    const response = await list();
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ books: [], total: 0 });
+  });
+
+  // Dos libros con relaciones distintas: si el reparto en lote mezclara ids, uno llevaría
+  // autores, géneros, saga o préstamo del otro.
+  it('cada libro trae solo sus relaciones, igual que el detalle', async () => {
+    const headers = await headersFor('adult');
+    const [zeta, alfa, otro] = [
+      await createAuthor({ name: 'Zeta' }),
+      await createAuthor({ name: 'Alfa' }),
+      await createAuthor({ name: 'Otro autor' }),
+    ];
+    const [terror, aventura, poesia] = [
+      await createGenre({ name: 'Terror' }),
+      await createGenre({ name: 'Aventura' }),
+      await createGenre({ name: 'Poesía' }),
+    ];
+    const [fundacion, dune] = [
+      await createSaga({ name: 'Fundación' }),
+      await createSaga({ name: 'Dune' }),
+    ];
+    const full = await createBook({
+      title: 'A completo',
+      authorIds: [zeta.id, alfa.id],
+      genreIds: [terror.id, aventura.id],
+      sagaId: fundacion.id,
+      sagaOrder: 1,
+    });
+    const other = await createBook({
+      title: 'B otro',
+      authorIds: [otro.id],
+      genreIds: [poesia.id],
+      sagaId: dune.id,
+      sagaOrder: 1,
+    });
+    await createLoan({ bookId: full.id, borrower: 'Vecina' });
+    await createLoan({ bookId: other.id, borrower: 'Primo' });
+    const bare = await createBook({ title: 'C vacío' });
+
+    const response = await list();
+    const details = await Promise.all(
+      [full, other, bare].map(async (book) =>
+        (await app.inject({ method: 'GET', url: `/books/${book.id}`, headers })).json<BookDetail>(),
+      ),
+    );
+
+    expect(response.json()).toEqual({ books: details, total: 3 });
+    const [first, second, third] = response.json<BookListResponse>().books;
+    expect(first!.authors.map((author) => author.name)).toEqual(['Alfa', 'Zeta']);
+    expect(first!.genres.map((genre) => genre.name)).toEqual(['Aventura', 'Terror']);
+    expect(first!.saga).toEqual({ id: fundacion.id, name: 'Fundación' });
+    expect(first!.activeLoan).toMatchObject({ borrower: 'Vecina' });
+    expect(second!.authors.map((author) => author.name)).toEqual(['Otro autor']);
+    expect(second!.genres.map((genre) => genre.name)).toEqual(['Poesía']);
+    expect(second!.saga).toEqual({ id: dune.id, name: 'Dune' });
+    expect(second!.activeLoan).toMatchObject({ borrower: 'Primo' });
+    expect(third).toMatchObject({ authors: [], genres: [], saga: null, activeLoan: null });
+  });
+
+  it('ordena por título', async () => {
+    await createBook({ title: 'Cumbres' });
+    await createBook({ title: 'Anillos' });
+    await createBook({ title: 'Bosque' });
+
+    expect(await titles({})).toEqual(['Anillos', 'Bosque', 'Cumbres']);
+  });
+
+  it('pagina con limit y offset sin solapar páginas, y total cuenta todos', async () => {
+    for (const title of ['E', 'D', 'C', 'B', 'A']) await createBook({ title });
+
+    const pages = await Promise.all(
+      ['0', '2', '4'].map(async (offset) =>
+        (await list({ limit: '2', offset })).json<BookListResponse>(),
+      ),
+    );
+
+    expect(pages.map((page) => page.total)).toEqual([5, 5, 5]);
+    expect(pages.map((page) => page.books.map((book) => book.title))).toEqual([
+      ['A', 'B'],
+      ['C', 'D'],
+      ['E'],
+    ]);
+  });
+
+  it.each<Record<string, string>>([{ limit: '0' }, { limit: '201' }, { offset: '-1' }])(
+    'con paginación fuera de rango (%o) da 400',
+    async (query) => {
+      expect((await list(query)).statusCode).toBe(400);
+    },
+  );
+
+  it('q busca en el título sin distinguir mayúsculas y en el nombre de los autores', async () => {
+    const tolkien = await createAuthor({ name: 'J. R. R. Tolkien' });
+    await createBook({ title: 'El Hobbit' });
+    await createBook({ title: 'El Silmarillion', authorIds: [tolkien.id] });
+    await createBook({ title: 'Dune' });
+
+    expect(await titles({ q: 'hobbit' })).toEqual(['El Hobbit']);
+    expect(await titles({ q: 'tolkien' })).toEqual(['El Silmarillion']);
+  });
+
+  it('un libro que coincide varias veces con q sale una sola vez', async () => {
+    const first = await createAuthor({ name: 'Ana Fantasía' });
+    const second = await createAuthor({ name: 'Luis Fantasía' });
+    await createBook({ title: 'Fantasía total', authorIds: [first.id, second.id] });
+
+    const response = await list({ q: 'fantasía' });
+
+    expect(response.json<BookListResponse>().books).toHaveLength(1);
+    expect(response.json<BookListResponse>().total).toBe(1);
+  });
+
+  it('q vacío da 400', async () => {
+    expect((await list({ q: '' })).statusCode).toBe(400);
+  });
+
+  it('authorId, genreId y sagaId devuelven solo los libros con esa relación', async () => {
+    const author = await createAuthor();
+    const genre = await createGenre();
+    const saga = await createSaga();
+    await createBook({ title: 'Con autor', authorIds: [author.id] });
+    await createBook({ title: 'Con género', genreIds: [genre.id] });
+    await createBook({ title: 'Con saga', sagaId: saga.id });
+    await createBook({ title: 'Sin nada' });
+
+    expect(await titles({ authorId: author.id })).toEqual(['Con autor']);
+    expect(await titles({ genreId: genre.id })).toEqual(['Con género']);
+    expect(await titles({ sagaId: saga.id })).toEqual(['Con saga']);
+  });
+
+  it('un filtro con id inexistente da lista vacía y uno mal formado, 400', async () => {
+    await createBook();
+
+    for (const filter of ['authorId', 'genreId', 'sagaId']) {
+      const unknown = await list({ [filter]: UNKNOWN_ID });
+      expect(unknown.statusCode, filter).toBe(200);
+      expect(unknown.json(), filter).toEqual({ books: [], total: 0 });
+      expect((await list({ [filter]: 'no-es-un-uuid' })).statusCode, filter).toBe(400);
+    }
+  });
+
+  it('loaned filtra por préstamo sin devolver; uno devuelto cuenta como no prestado', async () => {
+    const loaned = await createBook({ title: 'Prestado' });
+    const returned = await createBook({ title: 'Devuelto' });
+    await createBook({ title: 'En casa' });
+    await createLoan({ bookId: loaned.id });
+    await createLoan({ bookId: returned.id, returnedAt: '2026-02-01' });
+
+    expect(await titles({ loaned: 'true' })).toEqual(['Prestado']);
+    expect(await titles({ loaned: 'false' })).toEqual(['Devuelto', 'En casa']);
+  });
+
+  it('loaned con un valor que no es true ni false da 400', async () => {
+    expect((await list({ loaned: 'yes' })).statusCode).toBe(400);
+    expect((await list({ loaned: 'TRUE' })).statusCode).toBe(400);
+  });
+
+  it('los filtros se combinan con AND', async () => {
+    const genre = await createGenre();
+    const match = await createBook({ title: 'Viaje A', genreIds: [genre.id] });
+    await createBook({ title: 'Viaje B', genreIds: [genre.id] }); // sin préstamo
+    const otherGenre = await createBook({ title: 'Viaje C' });
+    const otherTitle = await createBook({ title: 'Otro', genreIds: [genre.id] });
+    for (const book of [match, otherGenre, otherTitle]) await createLoan({ bookId: book.id });
+
+    const response = await list({ q: 'viaje', genreId: genre.id, loaned: 'true' });
+
+    expect(response.json<BookListResponse>().books.map((book) => book.id)).toEqual([match.id]);
+    expect(response.json<BookListResponse>().total).toBe(1);
   });
 });
 

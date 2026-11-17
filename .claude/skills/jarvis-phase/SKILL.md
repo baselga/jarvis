@@ -14,6 +14,7 @@ Argumentos: `N` (empezar la fase N) o `close N` (cerrar la fase N).
 1. **Contexto mínimo.** Lee solo:
    - La sección de la fase N en `docs/PLAN.md` (alcance y "terminada cuando…") y las decisiones pendientes que le afecten.
    - `docs/fases/fase-(N-1).md` si existe. No leas fases anteriores ni el código salvo que haga falta para una pregunta concreta.
+   - `docs/deuda.md`: proponme qué entradas encajan en esta fase (como tareas o dentro de otras).
 2. **Entrevista.** Pregúntame lo que no esté claro: funcionalidades concretas, datos, casos de uso, prioridades y decisiones técnicas abiertas.
    - Como mucho 3 preguntas por mensaje, cada una con tu propuesta por defecto y por qué, para que pueda responder "vale".
    - Cuando una decisión técnica sea buena para aprender backend, explícame brevemente las opciones.
@@ -36,7 +37,7 @@ Argumentos: `N` (empezar la fase N) o `close N` (cerrar la fase N).
    - Qué se ha construido (módulos, endpoints, tablas) y dónde está.
    - Decisiones tomadas y su porqué.
    - Comandos nuevos o cambios en `CLAUDE.md`.
-   - Pendientes y deuda técnica conocida.
+   - Pendientes (la deuda vive en `docs/deuda.md`: compruébalo al día y aquí solo un puntero a lo que afecte a la siguiente fase).
    - Conceptos de backend aprendidos en la fase, en una lista breve.
    Usa como fuente las secciones "Conceptos nuevos" y "Cierre" de cada `docs/fases/fase-N/tarea-M.md` y las "Notas" del plan, no el código entero.
 3. Cambia las líneas del `CLAUDE.md` raíz a `Fase activa: ninguna (siguiente: N+1)` y `Tarea activa: ninguna`. Actualiza la sección de comandos de `CLAUDE.md` si han cambiado, y el `CLAUDE.md` de cada app tocada si han aparecido convenciones o patrones nuevos (o crea el de una app nueva). Comprueba que `docs/dominio.md` refleja lo construido.

@@ -25,7 +25,8 @@ No hagas commits. Si el `Estado` no es `revisada`, dime qué paso falta y para.
    - `CLAUDE.md` raíz: comandos nuevos o reglas que afecten a todo el monorepo.
    - `docs/dominio.md`: si cambiaron entidades, campos, roles o reglas de permisos.
    - `.env.example`: variables nuevas.
-   - "Notas" de `fase-F-plan.md` (créala al final si no existe): 1-3 líneas que las siguientes tareas necesiten (helpers reutilizables, patrones de referencia, deuda conocida).
+   - "Notas" de `fase-F-plan.md` (créala al final si no existe): 1-3 líneas que las siguientes tareas necesiten (helpers reutilizables, patrones de referencia).
+   - `docs/deuda.md`: deuda nueva o mejoras que se dejaron fuera (de "Fuera de alcance", mejoras descartadas de la revisión…), con su porqué y la tarea de origen; borra las entradas que esta tarea haya resuelto.
    Aplícalos cuando te parezcan bien. Mantén los `CLAUDE.md` cortos: patrones y punteros, no explicaciones.
 3. **Marca la tarea** `[x]` en `fase-F-plan.md`. Si durante la tarea cambió algo del plan (decisión, alcance de otra tarea), actualízalo.
 4. **Rellena "Cierre"** en `tarea-N.md`: qué quedó documentado y dónde, y deuda o pendientes para otras tareas. Si durante la implementación aparecieron conceptos de backend que no estaban en "Conceptos nuevos", añádelos allí. Pon `Estado` en `terminada`.

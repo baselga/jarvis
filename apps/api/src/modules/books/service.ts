@@ -1,5 +1,12 @@
-import type { BookDetail, CreateBookRequest, UpdateBookRequest } from '@jarvis/schemas';
-import { and, eq, isNull } from 'drizzle-orm';
+import type {
+  Book,
+  BookDetail,
+  BookListQuery,
+  BookListResponse,
+  CreateBookRequest,
+  UpdateBookRequest,
+} from '@jarvis/schemas';
+import { and, count, eq, exists, ilike, inArray, isNull, notExists, or } from 'drizzle-orm';
 import type { DbOrTx } from '../../db/client.js';
 import { constraintOf, isCheckViolation, isForeignKeyViolation } from '../../db/errors.js';
 import {
@@ -11,6 +18,7 @@ import {
   loans,
   sagas,
 } from '../../db/schema/index.js';
+import { containsPattern } from '../../db/search.js';
 
 export type InvalidReferenceEntity = 'author' | 'genre' | 'saga';
 
@@ -26,7 +34,8 @@ export type UpdateBookResult =
 
 export type DeleteBookResult = { status: 'ok' } | { status: 'not_found' };
 
-const bookColumns = {
+// Lo comparten el detalle, el listado y el detalle de saga (`modules/sagas/service.ts`).
+export const bookColumns = {
   id: books.id,
   title: books.title,
   sagaId: books.sagaId,
@@ -38,48 +47,137 @@ const bookColumns = {
   notes: books.notes,
 };
 
-// Consultas separadas en vez de un JOIN gigante: autores y géneros multiplicarían las filas.
-// Autores y géneros salen por nombre (y `id` desempata nombres que solo difieren en mayúsculas).
+const loanColumns = {
+  id: loans.id,
+  bookId: loans.bookId,
+  borrower: loans.borrower,
+  loanedAt: loans.loanedAt,
+  returnedAt: loans.returnedAt,
+};
+
+function groupByBook<T extends { bookId: string }>(rows: T[]) {
+  const groups = new Map<string, Omit<T, 'bookId'>[]>();
+  for (const { bookId, ...rest } of rows) {
+    const group = groups.get(bookId);
+    if (group) group.push(rest);
+    else groups.set(bookId, [rest]);
+  }
+  return groups;
+}
+
+// Evita el N+1: en vez de cuatro consultas por libro, una por relación para todos los libros
+// (`WHERE book_id IN (...)`), repartidas después en memoria. Sin `JOIN` gigante: autores y
+// géneros multiplicarían las filas. Autores y géneros salen por nombre (y `id` desempata
+// nombres que solo difieren en mayúsculas). Conserva el orden de `bookRows`.
+async function withRelations(db: DbOrTx, bookRows: Book[]): Promise<BookDetail[]> {
+  if (bookRows.length === 0) return [];
+  const ids = bookRows.map((book) => book.id);
+  const sagaIds = [...new Set(bookRows.flatMap((book) => (book.sagaId ? [book.sagaId] : [])))];
+
+  const [authorRows, genreRows, sagaRows, loanRows] = await Promise.all([
+    db
+      .select({ bookId: bookAuthors.bookId, id: authors.id, name: authors.name })
+      .from(bookAuthors)
+      .innerJoin(authors, eq(authors.id, bookAuthors.authorId))
+      .where(inArray(bookAuthors.bookId, ids))
+      .orderBy(authors.name, authors.id),
+    db
+      .select({ bookId: bookGenres.bookId, id: genres.id, name: genres.name })
+      .from(bookGenres)
+      .innerJoin(genres, eq(genres.id, bookGenres.genreId))
+      .where(inArray(bookGenres.bookId, ids))
+      .orderBy(genres.name, genres.id),
+    sagaIds.length === 0
+      ? Promise.resolve([])
+      : db.select({ id: sagas.id, name: sagas.name }).from(sagas).where(inArray(sagas.id, sagaIds)),
+    // El índice único parcial garantiza como mucho un préstamo sin devolver por libro.
+    db
+      .select(loanColumns)
+      .from(loans)
+      .where(and(inArray(loans.bookId, ids), isNull(loans.returnedAt))),
+  ]);
+
+  const authorsByBook = groupByBook(authorRows);
+  const genresByBook = groupByBook(genreRows);
+  const sagasById = new Map(sagaRows.map((saga) => [saga.id, saga]));
+  const loansByBook = new Map(loanRows.map((loan) => [loan.bookId, loan]));
+
+  return bookRows.map((book) => ({
+    ...book,
+    authors: authorsByBook.get(book.id) ?? [],
+    genres: genresByBook.get(book.id) ?? [],
+    saga: book.sagaId === null ? null : (sagasById.get(book.sagaId) ?? null),
+    activeLoan: loansByBook.get(book.id) ?? null,
+  }));
+}
+
 export async function getBook(db: DbOrTx, id: string): Promise<BookDetail | undefined> {
   const [book] = await db.select(bookColumns).from(books).where(eq(books.id, id));
   if (!book) return undefined;
+  const [detail] = await withRelations(db, [book]);
+  return detail;
+}
 
-  const [bookAuthorRows, bookGenreRows, [saga], [activeLoan]] = await Promise.all([
+// `q` busca en el título y en el nombre de cualquiera de los autores.
+function matchesQuery(db: DbOrTx, q: string) {
+  const pattern = containsPattern(q);
+  return or(
+    ilike(books.title, pattern),
+    exists(
+      db
+        .select({ id: authors.id })
+        .from(bookAuthors)
+        .innerJoin(authors, eq(authors.id, bookAuthors.authorId))
+        .where(and(eq(bookAuthors.bookId, books.id), ilike(authors.name, pattern))),
+    ),
+  );
+}
+
+// Los filtros sobre tablas relacionadas van con `EXISTS` y no con `JOIN`: un libro con dos
+// autores que coinciden con `q` saldría dos veces y `total` contaría de más.
+function listWhere(db: DbOrTx, { q, authorId, genreId, sagaId, loaned }: BookListQuery) {
+  const activeLoan = db
+    .select({ id: loans.id })
+    .from(loans)
+    .where(and(eq(loans.bookId, books.id), isNull(loans.returnedAt)));
+
+  return and(
+    q === undefined ? undefined : matchesQuery(db, q),
+    authorId === undefined
+      ? undefined
+      : exists(
+          db
+            .select({ id: bookAuthors.authorId })
+            .from(bookAuthors)
+            .where(and(eq(bookAuthors.bookId, books.id), eq(bookAuthors.authorId, authorId))),
+        ),
+    genreId === undefined
+      ? undefined
+      : exists(
+          db
+            .select({ id: bookGenres.genreId })
+            .from(bookGenres)
+            .where(and(eq(bookGenres.bookId, books.id), eq(bookGenres.genreId, genreId))),
+        ),
+    sagaId === undefined ? undefined : eq(books.sagaId, sagaId),
+    loaned === undefined ? undefined : loaned ? exists(activeLoan) : notExists(activeLoan),
+  );
+}
+
+export async function listBooks(db: DbOrTx, query: BookListQuery): Promise<BookListResponse> {
+  const where = listWhere(db, query);
+  const [rows, [totalRow]] = await Promise.all([
     db
-      .select({ id: authors.id, name: authors.name })
-      .from(bookAuthors)
-      .innerJoin(authors, eq(authors.id, bookAuthors.authorId))
-      .where(eq(bookAuthors.bookId, id))
-      .orderBy(authors.name, authors.id),
-    db
-      .select({ id: genres.id, name: genres.name })
-      .from(bookGenres)
-      .innerJoin(genres, eq(genres.id, bookGenres.genreId))
-      .where(eq(bookGenres.bookId, id))
-      .orderBy(genres.name, genres.id),
-    book.sagaId === null
-      ? Promise.resolve([])
-      : db.select({ id: sagas.id, name: sagas.name }).from(sagas).where(eq(sagas.id, book.sagaId)),
-    // El índice único parcial garantiza como mucho un préstamo sin devolver por libro.
-    db
-      .select({
-        id: loans.id,
-        bookId: loans.bookId,
-        borrower: loans.borrower,
-        loanedAt: loans.loanedAt,
-        returnedAt: loans.returnedAt,
-      })
-      .from(loans)
-      .where(and(eq(loans.bookId, id), isNull(loans.returnedAt))),
+      .select(bookColumns)
+      .from(books)
+      .where(where)
+      // `id` desempata títulos iguales: sin él las páginas podrían solaparse.
+      .orderBy(books.title, books.id)
+      .limit(query.limit)
+      .offset(query.offset),
+    db.select({ total: count() }).from(books).where(where),
   ]);
-
-  return {
-    ...book,
-    authors: bookAuthorRows,
-    genres: bookGenreRows,
-    saga: saga ?? null,
-    activeLoan: activeLoan ?? null,
-  };
+  return { books: await withRelations(db, rows), total: totalRow!.total };
 }
 
 // Qué referencia del cuerpo no existe, según la clave foránea que saltó.

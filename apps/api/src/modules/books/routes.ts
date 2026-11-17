@@ -1,6 +1,8 @@
 import {
   BookDetailSchema,
   BookIdParamsSchema,
+  BookListQuerySchema,
+  BookListResponseSchema,
   CreateBookRequestSchema,
   ErrorResponseSchema,
   UpdateBookRequestSchema,
@@ -13,6 +15,7 @@ import {
   createBook,
   deleteBook,
   getBook,
+  listBooks,
   updateBook,
   type InvalidReferenceEntity,
 } from './service.js';
@@ -29,6 +32,24 @@ const sagaOrderWithoutSaga = badRequest('El orden en la saga necesita una saga')
 export const bookRoutes: FastifyPluginAsyncZod = async (app) => {
   app.addHook('onRequest', app.authenticate);
   const canWrite = requireRole('admin', 'adult');
+
+  app.get(
+    '/books',
+    {
+      schema: {
+        tags: ['books'],
+        summary: 'Lista libros con búsqueda (título y autores), filtros y paginación',
+        security: sessionSecurity,
+        querystring: BookListQuerySchema,
+        response: {
+          200: BookListResponseSchema,
+          400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request) => listBooks(app.db, request.query),
+  );
 
   app.get(
     '/books/:id',

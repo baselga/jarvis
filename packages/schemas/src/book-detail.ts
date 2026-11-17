@@ -12,6 +12,7 @@ import {
 } from './book.js';
 import { GenreSchema } from './genre.js';
 import { LoanSchema } from './loan.js';
+import { PaginationQuerySchema } from './pagination.js';
 import { SagaSchema } from './saga.js';
 
 // Vive aparte de `book.ts` porque necesita `SagaSchema`, y `saga.ts` ya importa `book.ts`:
@@ -82,3 +83,27 @@ export const BookDetailSchema = BookSchema.extend({
 });
 
 export type BookDetail = z.infer<typeof BookDetailSchema>;
+
+// Filtros del listado, combinados con AND. Un id de filtro inexistente no es un error:
+// da una lista vacía. `z.coerce.boolean()` convertiría `"false"` en `true` (texto no
+// vacío), así que `loaned` solo acepta `true`/`false`, en minúsculas.
+export const BookListQuerySchema = PaginationQuerySchema.extend({
+  q: z.string().trim().min(1).max(200).optional(),
+  authorId: z.uuid().optional(),
+  genreId: z.uuid().optional(),
+  sagaId: z.uuid().optional(),
+  loaned: z
+    .stringbool({ truthy: ['true'], falsy: ['false'], case: 'sensitive' })
+    .optional()
+    .describe('`true`: solo prestados; `false`: solo no prestados'),
+});
+
+export type BookListQuery = z.infer<typeof BookListQuerySchema>;
+
+// `total` cuenta los libros que cumplen los filtros, sin `limit` ni `offset`.
+export const BookListResponseSchema = z.object({
+  books: z.array(BookDetailSchema),
+  total: z.number().int().min(0),
+});
+
+export type BookListResponse = z.infer<typeof BookListResponseSchema>;
