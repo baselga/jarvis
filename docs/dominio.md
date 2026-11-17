@@ -29,7 +29,7 @@ Reglas de usuarios:
 
 ## Biblioteca
 
-- **Libro** — un ejemplar de casa. Título (obligatorio), autores, géneros, saga y su orden en ella, ISBN, año, idioma, ubicación ("salón, estantería 2") y notas; todo salvo el título es opcional.
+- **Libro** — un ejemplar de casa. Título (obligatorio), autores, géneros, saga y su orden en ella, ISBN, año, idioma, ubicación ("salón, estantería 2") y notas; todo salvo el título es opcional. El ISBN puede repetirse (dos ejemplares). El orden en la saga solo se admite si el libro tiene saga.
 - **Autor** — nombre (no se puede repetir, sin distinguir mayúsculas). Un libro puede tener varios autores y un autor varios libros.
 - **Género** — nombre, no repetible sin distinguir mayúsculas ("Ciencia ficción", "Ensayo"…). Lista controlada que se edita desde la web; un libro puede tener varios.
 - **Saga** — nombre ("Fundación"), no repetible sin distinguir mayúsculas. Un libro pertenece como mucho a una, con un orden de lectura que admite decimales (2.5 para un relato intermedio). Puede haber dos libros con el mismo orden (p. ej. una edición ómnibus).

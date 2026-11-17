@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { isForeignKeyViolation, isUniqueViolation } from './errors.js';
+import {
+  constraintOf,
+  isCheckViolation,
+  isForeignKeyViolation,
+  isUniqueViolation,
+} from './errors.js';
 
 // Como los de Drizzle 0.45: un `Error` cuyo `cause` lleva el código de Postgres.
 const wrapped = (code: string) => new Error('Failed query', { cause: { code } });
@@ -31,5 +36,31 @@ describe('isForeignKeyViolation', () => {
     expect(isForeignKeyViolation({ code: '23505' })).toBe(false);
     expect(isForeignKeyViolation(wrapped('23505'))).toBe(false);
     expect(isForeignKeyViolation(null)).toBe(false);
+  });
+});
+
+describe('isCheckViolation', () => {
+  it('detecta 23514 directo y en cause', () => {
+    expect(isCheckViolation({ code: '23514' })).toBe(true);
+    expect(isCheckViolation(wrapped('23514'))).toBe(true);
+  });
+
+  it('otro código o un valor que no es error → false', () => {
+    expect(isCheckViolation(wrapped('23505'))).toBe(false);
+    expect(isCheckViolation(undefined)).toBe(false);
+  });
+});
+
+describe('constraintOf', () => {
+  it('lee constraint_name directo y en cause', () => {
+    expect(constraintOf({ constraint_name: 'a_fk' })).toBe('a_fk');
+    expect(constraintOf(new Error('Failed query', { cause: { constraint_name: 'b_fk' } }))).toBe(
+      'b_fk',
+    );
+  });
+
+  it('sin nombre de restricción → undefined', () => {
+    expect(constraintOf(wrapped('23503'))).toBeUndefined();
+    expect(constraintOf(null)).toBeUndefined();
   });
 });

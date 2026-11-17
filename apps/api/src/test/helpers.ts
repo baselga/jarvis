@@ -10,6 +10,7 @@ import {
   bookGenres,
   books,
   genres,
+  loans,
   sagas,
   sessions,
   users,
@@ -147,4 +148,23 @@ export async function createBook({
       .values(genreIds.map((genreId) => ({ bookId: book!.id, genreId })));
   }
   return book!;
+}
+
+// Inserta un préstamo con valores por defecto válidos; sin `returnedAt` está activo.
+export async function createLoan({
+  bookId,
+  borrower = 'Vecina',
+  loanedAt = '2026-01-10',
+  returnedAt,
+}: {
+  bookId: string;
+  borrower?: string;
+  loanedAt?: string;
+  returnedAt?: string;
+}) {
+  const [loan] = await testDb
+    .insert(loans)
+    .values({ bookId, borrower, loanedAt, returnedAt })
+    .returning();
+  return loan!;
 }

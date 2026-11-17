@@ -6,6 +6,7 @@ import type { Db } from './db/client.js';
 import { registerOpenApi } from './openapi.js';
 import { authRoutes } from './modules/auth/routes.js';
 import { authorRoutes } from './modules/authors/routes.js';
+import { bookRoutes } from './modules/books/routes.js';
 import { genreRoutes } from './modules/genres/routes.js';
 import { healthRoutes } from './modules/health/routes.js';
 import { sagaRoutes } from './modules/sagas/routes.js';
@@ -57,5 +58,6 @@ export function buildApp({ logger = false, db, cookieSecure = false }: BuildAppO
   app.register(authorRoutes);
   app.register(genreRoutes);
   app.register(sagaRoutes);
+  app.register(bookRoutes);
   return app;
 }

@@ -1,5 +1,6 @@
 export * from './auth.js';
 export * from './author.js';
+export * from './book-detail.js';
 export * from './book.js';
 export * from './date.js';
 export * from './error.js';
