@@ -40,3 +40,4 @@ Reglas:
 
 - No se puede borrar un autor, género o saga que tenga libros.
 - Borrar un libro borra también sus préstamos y lecturas.
+- La devolución de un préstamo no puede ser anterior al préstamo (puede ser el mismo día). Los préstamos no se editan ni se borran (ver `docs/deuda.md`).

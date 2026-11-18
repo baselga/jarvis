@@ -34,7 +34,8 @@ export type UpdateBookResult =
 
 export type DeleteBookResult = { status: 'ok' } | { status: 'not_found' };
 
-// Lo comparten el detalle, el listado y el detalle de saga (`modules/sagas/service.ts`).
+// Lo comparten el detalle, el listado, el detalle de saga (`modules/sagas/service.ts`) y los
+// préstamos activos (`modules/loans/service.ts`).
 export const bookColumns = {
   id: books.id,
   title: books.title,
@@ -47,7 +48,8 @@ export const bookColumns = {
   notes: books.notes,
 };
 
-const loanColumns = {
+// También lo usa `modules/loans/service.ts`.
+export const loanColumns = {
   id: loans.id,
   bookId: loans.bookId,
   borrower: loans.borrower,
@@ -69,7 +71,7 @@ function groupByBook<T extends { bookId: string }>(rows: T[]) {
 // (`WHERE book_id IN (...)`), repartidas después en memoria. Sin `JOIN` gigante: autores y
 // géneros multiplicarían las filas. Autores y géneros salen por nombre (y `id` desempata
 // nombres que solo difieren en mayúsculas). Conserva el orden de `bookRows`.
-async function withRelations(db: DbOrTx, bookRows: Book[]): Promise<BookDetail[]> {
+export async function withRelations(db: DbOrTx, bookRows: Book[]): Promise<BookDetail[]> {
   if (bookRows.length === 0) return [];
   const ids = bookRows.map((book) => book.id);
   const sagaIds = [...new Set(bookRows.flatMap((book) => (book.sagaId ? [book.sagaId] : [])))];

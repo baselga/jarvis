@@ -6,6 +6,7 @@ export * from './date.js';
 export * from './error.js';
 export * from './genre.js';
 export * from './health.js';
+export * from './loan-detail.js';
 export * from './loan.js';
 export * from './pagination.js';
 export * from './reading.js';
