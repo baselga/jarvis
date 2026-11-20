@@ -1,8 +1,8 @@
-# Fase 1 — API hogar y gestión (biblioteca): plan
+# Fase 1 — API hogar (biblioteca): plan
 
-Alcance reducido: usuarios, roles y autenticación, más la **biblioteca** (libros, autores, géneros, sagas, préstamos y lecturas) con su gestión web. Compra, tareas y recetas quedan para fases futuras. Glosario: `docs/dominio.md`.
+Alcance reducido: usuarios, roles y autenticación, más la **biblioteca** (libros, autores, géneros, sagas, préstamos y lecturas) en la API. Compra, tareas y recetas quedan para fases futuras. Glosario: `docs/dominio.md`.
 
-Tres bloques, cada uno usable y revisable por separado: **1a** auth y usuarios, **1b** biblioteca en la API, **1c** web `/gestion`.
+Dos bloques, cada uno revisable por separado: **1a** auth y usuarios, **1b** biblioteca en la API. La web `/gestion` (antes bloque 1c, tareas 15–20) pasa a la fase 2, que se planifica con su propia entrevista.
 
 ## Decisiones
 
@@ -19,7 +19,6 @@ Tres bloques, cada uno usable y revisable por separado: **1a** auth y usuarios, 
 - **Borrado:** un autor, género o saga con libros no se puede borrar (409). Borrar un libro borra sus préstamos y lecturas.
 - **Listados con `?q=` (`ILIKE` en título y autor), filtros y `limit`/`offset`.** Suficiente para unos cientos de libros.
 - **Tests contra Postgres real:** BD `jarvis_test` en el mismo contenedor, migraciones al empezar y tablas vaciadas entre tests. Los permisos y las relaciones se rompen en el SQL; un mock no lo vería.
-- **Web:** Vite + React + TanStack Router + TanStack Query + **Mantine** + React Hook Form con los esquemas Zod compartidos. En desarrollo, Vite hace de *proxy* de `/api` hacia la API: mismo origen, así la cookie funciona sin CORS.
 
 ## Tareas
 
@@ -43,27 +42,17 @@ Tres bloques, cada uno usable y revisable por separado: **1a** auth y usuarios, 
 13. [x] **Préstamos:** prestar (409 si ya está prestado), devolver, historial por libro y préstamos activos. Tests: permisos por rol, doble préstamo → 409.
 14. [x] **Lecturas:** CRUD de lecturas propias (inicio opcional, fin, valoración 1–5 y nota opcionales), ver las de la casa por libro y por usuario. Tests: invitado ve las de la casa pero no crea, edita ni borra (403), no puedo editar/borrar lecturas de otro → 403, admin tampoco.
 
-### 1c — Web `/gestion`
-
-15. [ ] **Esqueleto de `apps/web`:** Vite + React + Mantine + TanStack Router/Query, *proxy* `/api`, servicio en Compose y los 4 pasos de "Añadir una app" de `CLAUDE.md` (incluido su `CLAUDE.md`).
-16. [ ] **Login y sesión:** pantalla de login, `/auth/me` para saber quién soy, rutas protegidas, logout, cambiar contraseña.
-17. [ ] **Libros:** tabla con búsqueda, filtros y paginación; formulario de alta/edición con *multiselect* de autores y géneros y saga + orden.
-18. [ ] **Autores, géneros y sagas:** listados y formularios.
-19. [ ] **Detalle de libro:** préstamos (prestar/devolver) y lecturas (las mías editables, las de la casa visibles).
-20. [ ] **Usuarios (solo admin)** y adaptar la interfaz al rol (ocultar acciones que la API rechazaría).
-
 ## Tests
 
 - Obligatorios (auth, roles, permisos): tareas 4–7, 9–11, 13 y 14, todos contra Postgres real con `inject()`.
 - Tarea 12: búsqueda y filtros, porque es lógica SQL fácil de romper.
-- Web: sin tests en esta fase; la seguridad vive en la API y la web se verifica a mano.
 
 ## Terminada cuando
 
-- Puedo iniciar sesión en la web y gestionar libros, autores, géneros, sagas, préstamos, lecturas y usuarios.
-- Un invitado entra, ve la biblioteca y no puede modificar nada; un adulto no gestiona usuarios ni toca lecturas ajenas.
+- La API permite iniciar sesión y gestionar libros, autores, géneros, sagas, préstamos, lecturas y usuarios.
+- Los tests prueban que un invitado ve la biblioteca y no puede modificar nada, y que un adulto no gestiona usuarios ni toca lecturas ajenas.
 - `/docs` muestra la API documentada.
-- `docker compose up -d` levanta `postgres`, `api` y `web`; `pnpm -r typecheck`, `pnpm -r test` y `pnpm -r lint` pasan.
+- `docker compose up -d` levanta `postgres` y `api`; `pnpm -r typecheck`, `pnpm -r test` y `pnpm -r lint` pasan.
 
 ## Notas
 
@@ -73,11 +62,11 @@ Tres bloques, cada uno usable y revisable por separado: **1a** auth y usuarios, 
 - Contraseñas (tarea 4): `hashPassword`/`verifyPassword` en `apps/api/src/auth/password.ts` (`verifyPassword` da `false` con hash malformado); `PasswordSchema` en `@jarvis/schemas` para la tarea 7; `createUser({ password })` para tests con login.
 - Sesiones (tarea 5): la tarea 6 construye `authenticate` sobre `getRequestToken` + `validateSession` (`apps/api/src/auth/`) y añade `security` a las rutas en OpenAPI (los `securitySchemes` `bearerAuth`/`cookieAuth` ya existen). La tarea 7 usa `EmailSchema` en el alta.
 - Autorización (tarea 6): patrón «Rutas protegidas» en `apps/api/CLAUDE.md` (`app.authenticate` como hook del plugin, `requireRole(...)` por ruta, `sessionSecurity` + `authErrorResponses` en el `schema`); referencia en `apps/api/src/auth/authenticate.test.ts`.
-- Usuarios (tarea 7): `isUniqueViolation` (`db/errors.ts`) → 409 y `DbOrTx` (`db/client.ts`) para funciones que escriben dentro de una transacción; la tarea 11 los reutiliza en el alta de libros. `User` va sin `createdAt`/`updatedAt` hasta que la tarea 8 decida cómo serializar fechas. La tarea 20 usa `PUT /auth/password` para la contraseña propia: `PUT /users/:id/password` sobre uno mismo cierra también la sesión actual.
+- Usuarios (tarea 7): `isUniqueViolation` (`db/errors.ts`) → 409 y `DbOrTx` (`db/client.ts`) para funciones que escriben dentro de una transacción; la tarea 11 los reutiliza en el alta de libros. `User` va sin `createdAt`/`updatedAt` hasta que la tarea 8 decida cómo serializar fechas. La web (fase 2) usa `PUT /auth/password` para la contraseña propia: `PUT /users/:id/password` sobre uno mismo cierra también la sesión actual.
 - Biblioteca (tarea 8): tablas en `apps/api/src/db/schema/library.ts`, esquemas de entidad y de campo en `packages/schemas` (los DTOs los define cada CRUD). `ON DELETE RESTRICT` lanza `23001`, no `23503`: el helper de las tareas 9 y 11 debe detectar ambos. Las fechas van como `DateSchema` (`YYYY-MM-DD`); `createdAt`/`updatedAt` no se exponen.
 - Autores (tarea 9): patrón de referencia en `apps/api/src/modules/authors/` (`routes.ts` + `service.ts` con resultado explícito; listado con `PaginationQuerySchema` y `{ authors, total }`); documentado en `apps/api/CLAUDE.md`. Reutilizables: `isForeignKeyViolation`, `containsPattern`, `http-errors.ts` y `createAuthor`/`createBook` en `test/helpers.ts` (la tarea 11 usa `isForeignKeyViolation` para ids inexistentes y `DbOrTx` en la transacción). Contrato: `q` vacío → 400 (la web debe omitirlo si la caja está vacía). La tarea 10 debe valorar si compensa extraer un CRUD genérico de entidades con solo `name`. Los tests no deben depender de la collation de la BD al ordenar nombres que solo difieren en mayúsculas.
 - Géneros y sagas (tarea 10): `genres/` y `sagas/` copian `authors/` sin CRUD genérico (decidido: se extrae con una cuarta entidad «solo nombre»). `createGenre`/`createSaga` en `test/helpers.ts`; `createBook` acepta `genreIds`, `sagaId` y `sagaOrder` (la tarea 11 los usa). `SagaDetailSchema` lleva el `BookSchema` plano: cuando la tarea 11 añada autores/géneros al libro, decidir si el detalle de saga los incluye.
 - Libros (tarea 11): `modules/books/` (`getBook` devuelve `BookDetail` con autores, géneros, saga y `activeLoan`; `createBook`/`updateBook` en transacción, patrón «N:M en transacción» en `apps/api/CLAUDE.md`). DTOs en `packages/schemas/src/book-detail.ts`; `createLoan` en `test/helpers.ts` para la tarea 13. `GET /sagas/:id` sigue con libros planos. `badRequest` y `constraintOf` disponibles para la tarea 13 (409 al prestar usa `conflict`).
-- Listado de libros (tarea 12): `GET /books` devuelve `{ books: BookDetail[], total }` con `q`, `authorId`, `genreId`, `sagaId` y `loaned` (`true`/`false` exactos; si no, 400), combinados con AND; un id inexistente da lista vacía. La tarea 17 usa esos nombres y omite `q` vacío. Relaciones de una lista con `withRelations` (`modules/books/service.ts`), reutilizable para los préstamos activos de la tarea 13. `bookColumns` exportado desde ahí.
-- Préstamos (tarea 13): `modules/loans/` con `POST /books/:id/loans`, `POST /loans/:id/return`, `GET /books/:id/loans` y `GET /loans/active` (`ActiveLoan` incluye el `BookDetail`). DTOs en `packages/schemas/src/loan-detail.ts`. Las fechas son obligatorias: la web de la tarea 19 envía la fecha de hoy del usuario.
-- Lecturas (tarea 14): `modules/readings/` con `GET /readings?bookId=&userId=` (cada elemento lleva `user: { id, name }` y `book: { id, title }`; «mis lecturas» = `?userId=<id de /auth/me>`), `POST /books/:id/readings` y `PATCH`/`DELETE /readings/:id` (solo el dueño, ni el admin). El invitado ve, pero no escribe. En `PATCH`, `null` vacía un campo y si no se envía no se toca. `createReading` en `test/helpers.ts` y `readingDateMessages` en `@jarvis/schemas`. La tarea 19 usa estos contratos.
+- Listado de libros (tarea 12): `GET /books` devuelve `{ books: BookDetail[], total }` con `q`, `authorId`, `genreId`, `sagaId` y `loaned` (`true`/`false` exactos; si no, 400), combinados con AND; un id inexistente da lista vacía. La web (fase 2) usa esos nombres y omite `q` vacío. Relaciones de una lista con `withRelations` (`modules/books/service.ts`), reutilizable para los préstamos activos de la tarea 13. `bookColumns` exportado desde ahí.
+- Préstamos (tarea 13): `modules/loans/` con `POST /books/:id/loans`, `POST /loans/:id/return`, `GET /books/:id/loans` y `GET /loans/active` (`ActiveLoan` incluye el `BookDetail`). DTOs en `packages/schemas/src/loan-detail.ts`. Las fechas son obligatorias: la web (fase 2) envía la fecha de hoy del usuario.
+- Lecturas (tarea 14): `modules/readings/` con `GET /readings?bookId=&userId=` (cada elemento lleva `user: { id, name }` y `book: { id, title }`; «mis lecturas» = `?userId=<id de /auth/me>`), `POST /books/:id/readings` y `PATCH`/`DELETE /readings/:id` (solo el dueño, ni el admin). El invitado ve, pero no escribe. En `PATCH`, `null` vacía un campo y si no se envía no se toca. `createReading` en `test/helpers.ts` y `readingDateMessages` en `@jarvis/schemas`. La web (fase 2) usa estos contratos.

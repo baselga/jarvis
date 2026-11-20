@@ -6,7 +6,7 @@ Objetivos, arquitectura y fases completos: `docs/PLAN.md` (léelo solo al empeza
 Estado del proyecto: `docs/fases/fase-N.md` (un resumen por fase terminada).
 Deuda técnica y mejoras pendientes: `docs/deuda.md` (apunta ahí lo que se deja para más adelante).
 Fase activa: 1 (plan: `docs/fases/fase-1-plan.md`)
-Tarea activa: ninguna (siguiente: 15)
+Tarea activa: ninguna (siguiente: por decidir; la fase 1 sigue abierta para resolver deuda antes de cerrarla)
 
 ## Forma de trabajar
 
@@ -33,7 +33,7 @@ apps/assistant/    LLM, memoria, herramientas (llamadas a la API).
 apps/web/          React: /chat y /gestion, un único login.
 packages/schemas/  Zod: fuente de verdad de entidades y DTOs.
 packages/api-client/ Cliente tipado de la API.
-voice/             (fase 5) satélite de voz en Python.
+voice/             (fase 6) satélite de voz en Python.
 ```
 
 Hoy solo existen `apps/api` y `packages/schemas`; el resto se crea en su fase. Cada app tiene su propio `CLAUDE.md` con sus convenciones. Glosario del hogar (miembros, roles, entidades): `docs/dominio.md` (desde la fase 1).

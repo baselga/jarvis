@@ -86,27 +86,28 @@ Todo se desarrolla con Docker Compose desde el primer día, para que el desplieg
 
 ## Fases
 
-El proyecto avanza en siete fases; cada una deja algo usable en casa, y la parte más arriesgada (la voz) llega cuando el resto ya funciona.
+El proyecto avanza en ocho fases; cada una deja algo terminado sobre lo que construir la siguiente, y la parte más arriesgada (la voz) llega cuando el resto ya funciona.
 
 | Fase | Alcance | Terminada cuando… |
 | --- | --- | --- |
 | 0. Esqueleto | Monorepo con pnpm, configuración TypeScript compartida, Docker Compose con PostgreSQL, API mínima con endpoint de salud. | `docker compose up` levanta la API y la base de datos, y `/health` responde. |
-| 1. API hogar y gestión | Usuarios y roles, autenticación, biblioteca (libros, autores, géneros, sagas, préstamos y lecturas) con CRUD y OpenAPI, sección `/gestion` de la web. Compra, tareas y recetas, en fases futuras. | Puedo iniciar sesión y gestionar la biblioteca y los usuarios desde la web. |
-| 2. Asistente por chat | Servicio `assistant`, LLM con tool calling sobre la API, sección `/chat` con respuestas en streaming. | "Añade leche a la lista de la compra" desde el chat aparece en la lista, y un invitado no puede borrar datos. |
-| 3. Despliegue en casa | Elegir el servidor, Caddy, acceso remoto seguro (Tailscale o Cloudflare Tunnel), copias de seguridad automáticas de la base de datos. | Uso el asistente desde el móvil fuera de casa y hay backups diarios. |
-| 4. Memoria | Guardar conversaciones por usuario, resumirlas en hechos persistentes y pasárselos al modelo; pgvector si hace falta. | El asistente recuerda algo de una conversación anterior y no mezcla lo de un usuario con otro. |
-| 5. Voz | Dispositivo en casa (Raspberry Pi o ESP32-S3), palabra de activación, voz a texto y texto a voz. El usuario se identifica diciendo quién es. | Le pregunto algo en voz alta y responde hablando. |
-| 6. Reconocimiento de hablante | Distinguir automáticamente mi voz y la de mi mujer; el resto se trata como invitado. | Nos reconoce en la mayoría de los casos y, si duda, pregunta. |
+| 1. API hogar | Usuarios y roles, autenticación, biblioteca (libros, autores, géneros, sagas, préstamos y lecturas) con CRUD y OpenAPI. Compra, tareas y recetas, en fases futuras. | La API gestiona la biblioteca y los usuarios con los permisos de cada rol probados, y `/docs` la documenta. |
+| 2. Web de gestión | `apps/web` con login y sección `/gestion` sobre la API de la fase 1. Alcance concreto, en su entrevista. | Puedo iniciar sesión y gestionar la biblioteca y los usuarios desde la web. |
+| 3. Asistente por chat | Servicio `assistant`, LLM con tool calling sobre la API, sección `/chat` con respuestas en streaming. | Desde el chat, "¿tenemos algún libro de Asimov?" responde con lo que hay en la biblioteca y "préstale *Fundación* a Bilbo" registra el préstamo, que se ve en la web; un invitado puede preguntar, pero no modificar datos. |
+| 4. Despliegue en casa | Elegir el servidor, Caddy, acceso remoto seguro (Tailscale o Cloudflare Tunnel), copias de seguridad automáticas de la base de datos. | Uso el asistente desde el móvil fuera de casa y hay backups diarios. |
+| 5. Memoria | Guardar conversaciones por usuario, resumirlas en hechos persistentes y pasárselos al modelo; pgvector si hace falta. | El asistente recuerda algo de una conversación anterior y no mezcla lo de un usuario con otro. |
+| 6. Voz | Dispositivo en casa (Raspberry Pi o ESP32-S3), palabra de activación, voz a texto y texto a voz. El usuario se identifica diciendo quién es. | Le pregunto algo en voz alta y responde hablando. |
+| 7. Reconocimiento de hablante | Distinguir automáticamente mi voz y la de mi mujer; el resto se trata como invitado. | Nos reconoce en la mayoría de los casos y, si duda, pregunta. |
 
 ## Decisiones pendientes y riesgos
 
-- [ ] Elegir el hardware del servidor (cuando haya algo que desplegar, en la fase 3).
+- [ ] Elegir el hardware del servidor (cuando haya algo que desplegar, en la fase 4).
 - [ ] Elegir el proveedor de LLM y fijar un límite de gasto mensual en su API.
-- [ ] Elegir el hardware del dispositivo de voz (fase 5).
+- [ ] Elegir el hardware del dispositivo de voz (fase 6).
 
 Riesgos principales:
 
 - **Reconocer quién habla por voz** es la pieza menos fiable. Mitigación: empezar con identificación explícita ("soy Daniel") y tratar el reconocimiento automático como mejora.
 - **La parte de voz es mayoritariamente Python**, no TypeScript. Se aísla en `voice/` y habla con el asistente por HTTP o WebSocket.
-- **Pérdida de datos** en un servidor doméstico. Mitigación: backups automáticos fuera del servidor desde la fase 3.
+- **Pérdida de datos** en un servidor doméstico. Mitigación: backups automáticos fuera del servidor desde la fase 4.
 - **Exponer el servidor a internet.** Mitigación: acceso remoto mediante Tailscale o Cloudflare Tunnel, sin abrir puertos en el router.
