@@ -10,6 +10,7 @@ import { bookRoutes } from './modules/books/routes.js';
 import { genreRoutes } from './modules/genres/routes.js';
 import { healthRoutes } from './modules/health/routes.js';
 import { loanRoutes } from './modules/loans/routes.js';
+import { readingRoutes } from './modules/readings/routes.js';
 import { sagaRoutes } from './modules/sagas/routes.js';
 import { userRoutes } from './modules/users/routes.js';
 
@@ -61,5 +62,6 @@ export function buildApp({ logger = false, db, cookieSecure = false }: BuildAppO
   app.register(sagaRoutes);
   app.register(bookRoutes);
   app.register(loanRoutes);
+  app.register(readingRoutes);
   return app;
 }

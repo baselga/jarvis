@@ -22,9 +22,9 @@ src/auth/          password.ts (argon2id), session.ts (crear/validar/borrar sesi
                    authenticate.ts (plugin `auth`: `app.authenticate`, `requireRole`).
 drizzle/           Migraciones SQL generadas por drizzle-kit, versionadas en git.
 src/modules/<x>/   Una carpeta por entidad o grupo de rutas: `routes.ts` (plugin Fastify) y `routes.test.ts`
-                   (`health`, `auth`, `users`, `authors`, `genres`, `sagas`, `books`, `loans`). Con lógica de datos propia lleva también `service.ts`
+                   (`health`, `auth`, `users`, `authors`, `genres`, `sagas`, `books`, `loans`, `readings`). Con lógica de datos propia lleva también `service.ts`
                    (`authors` es el patrón de referencia).
-src/http-errors.ts notFound(msg), badRequest(msg) y conflict(msg): errores HTTP compartidos por los módulos.
+src/http-errors.ts notFound(msg), badRequest(msg), forbidden(msg) y conflict(msg): errores HTTP compartidos por los módulos.
 src/test/          Infra de tests: BD `_test` (env.ts, global-setup.ts, setup.ts) y helpers.
 ```
 
@@ -55,6 +55,7 @@ src/test/          Infra de tests: BD `_test` (env.ts, global-setup.ts, setup.ts
 - **Listados con búsqueda y paginación:** query con `PaginationQuerySchema` (`limit` 1–200, def. 50; `offset`; `z.coerce` porque la query llega como texto) más `q`; respuesta `{ <entidad>s, total }` con `total` sobre el mismo `where` sin `limit`/`offset`. Ordena siempre por el campo y luego por `id` (desempate estable). `q` con `ilike(col, containsPattern(q))`. Los filtros sobre tablas relacionadas (autor, género, préstamo, `q` en autores) van con `exists(...)`/`notExists(...)` y una subconsulta correlacionada, no con `JOIN`: un `JOIN` repetiría el libro e inflaría `total`. Un id de filtro inexistente da lista vacía, no error. Booleanos de query con `z.stringbool(...)`, nunca `z.coerce.boolean()` (`"false"` → `true`). Ver `listBooks` en `modules/books/service.ts`.
 - **Relaciones en lote (evitar N+1):** para devolver una lista con sus relaciones, se lee la página y después cada relación de una vez para todos los ids (`inArray`), repartida con un `Map`; nunca una consulta por elemento. Ver `withRelations` en `modules/books/service.ts` (también lo usan `getBook` y `listActiveLoans`). `bookColumns` se exporta desde ahí y lo reutilizan `modules/sagas/service.ts` y `modules/loans/service.ts`.
 - **Acciones con reglas (`POST /loans/:id/return`):** ruta de acción en vez de un `PATCH` genérico, y `UPDATE … WHERE id = $1 AND <estado> RETURNING` (p. ej. `returned_at IS NULL`): atómico, sin leer antes. Si no cambia ninguna fila, una segunda consulta distingue 404 de 409. Ver `returnLoan` en `modules/loans/service.ts`.
+- **Autorización por fila (`PATCH`/`DELETE /readings/:id`):** además del rol, «¿esta fila es tuya?» va en el propio `WHERE` (`UPDATE/DELETE … WHERE id = $1 AND user_id = <yo> RETURNING`): una fila ajena nunca se toca. Si no cambia ninguna, una segunda consulta distingue 404 (no existe) de 403 (es de otro). El id del usuario sale de `request.user`, nunca del cuerpo. Ver `modules/readings/service.ts`.
 - **Códigos HTTP con intención:** 503 si falla una dependencia (BD), no 500.
 
 ## Tests

@@ -11,6 +11,7 @@ import {
   books,
   genres,
   loans,
+  readings,
   sagas,
   sessions,
   users,
@@ -167,4 +168,27 @@ export async function createLoan({
     .values({ bookId, borrower, loanedAt, returnedAt })
     .returning();
   return loan!;
+}
+
+// Inserta una lectura con valores por defecto válidos (terminada); `finishedAt: null` = «leyendo».
+export async function createReading({
+  bookId,
+  userId,
+  startedAt = '2026-01-10',
+  finishedAt = '2026-02-10',
+  rating = null,
+  note = null,
+}: {
+  bookId: string;
+  userId: string;
+  startedAt?: string | null;
+  finishedAt?: string | null;
+  rating?: number | null;
+  note?: string | null;
+}) {
+  const [reading] = await testDb
+    .insert(readings)
+    .values({ bookId, userId, startedAt, finishedAt, rating, note })
+    .returning();
+  return reading!;
 }
