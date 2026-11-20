@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { DateSchema } from './date.js';
+import { PaginationQuerySchema } from './pagination.js';
 
 export const RatingSchema = z.int().min(1).max(5);
 
@@ -17,3 +18,76 @@ export const ReadingSchema = z.object({
 });
 
 export type Reading = z.infer<typeof ReadingSchema>;
+
+export const ReadingIdParamsSchema = z.object({ id: z.uuid() });
+
+export type ReadingIdParams = z.infer<typeof ReadingIdParamsSchema>;
+
+// También los usa la API para traducir los `check` de la BD en la edición: un único texto por regla.
+export const readingDateMessages = {
+  noDate: 'Indica al menos la fecha de inicio o la de fin',
+  finishedBeforeStarted: 'El fin no puede ser anterior al inicio',
+};
+
+// Los textos `YYYY-MM-DD` se ordenan igual que las fechas: basta con compararlos.
+const finishedAfterStarted = (body: { startedAt?: string | null; finishedAt?: string | null }) =>
+  body.startedAt == null || body.finishedAt == null || body.finishedAt >= body.startedAt;
+
+// El usuario no va en el cuerpo: la lectura es siempre del de la sesión.
+export const CreateReadingRequestSchema = z
+  .object({
+    startedAt: DateSchema.optional(),
+    finishedAt: DateSchema.optional(),
+    rating: RatingSchema.optional(),
+    note: ReadingNoteSchema.optional(),
+  })
+  .refine((body) => body.startedAt !== undefined || body.finishedAt !== undefined, {
+    message: readingDateMessages.noDate,
+  })
+  .refine(finishedAfterStarted, {
+    message: readingDateMessages.finishedBeforeStarted,
+    path: ['finishedAt'],
+  });
+
+export type CreateReadingRequest = z.infer<typeof CreateReadingRequestSchema>;
+
+// Ausente = no tocar; `null` = vaciar. Las reglas que dependen de lo guardado
+// (quedarse sin fechas, fin anterior al inicio guardado) las comprueba la BD.
+export const UpdateReadingRequestSchema = z
+  .object({
+    startedAt: DateSchema.nullable().optional(),
+    finishedAt: DateSchema.nullable().optional(),
+    rating: RatingSchema.nullable().optional(),
+    note: ReadingNoteSchema.nullable().optional(),
+  })
+  .refine((body) => Object.values(body).some((value) => value !== undefined), {
+    message: 'Indica al menos un campo que cambiar',
+  })
+  .refine(finishedAfterStarted, {
+    message: readingDateMessages.finishedBeforeStarted,
+    path: ['finishedAt'],
+  });
+
+export type UpdateReadingRequest = z.infer<typeof UpdateReadingRequestSchema>;
+
+export const ReadingListQuerySchema = PaginationQuerySchema.extend({
+  bookId: z.uuid().optional(),
+  userId: z.uuid().optional(),
+});
+
+export type ReadingListQuery = z.infer<typeof ReadingListQuerySchema>;
+
+// Solo lo que hace falta para mostrarla: quién la leyó y qué libro (no el detalle entero).
+export const ReadingListItemSchema = ReadingSchema.extend({
+  user: z.object({ id: z.uuid(), name: z.string() }),
+  book: z.object({ id: z.uuid(), title: z.string() }),
+});
+
+export type ReadingListItem = z.infer<typeof ReadingListItemSchema>;
+
+export const ReadingListResponseSchema = z.object({
+  readings: z.array(ReadingListItemSchema),
+  total: z.number(),
+});
+
+export type ReadingListResponse = z.infer<typeof ReadingListResponseSchema>;

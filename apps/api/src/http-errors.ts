@@ -7,3 +7,6 @@ export const badRequest = (message: string) =>
 
 export const conflict = (message: string) =>
   ({ statusCode: 409, error: 'Conflict', message }) as const;
+
+export const forbidden = (message: string) =>
+  ({ statusCode: 403, error: 'Forbidden', message }) as const;

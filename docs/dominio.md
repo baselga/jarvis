@@ -21,7 +21,7 @@ Reglas de usuarios:
 |---|---|---|---|
 | Ver libros, autores, géneros, sagas y préstamos | ✅ | ✅ | ✅ |
 | Crear, editar y borrar esos datos | ✅ | ✅ | ❌ |
-| Ver lecturas de la casa | ✅ | ✅ | ❌ |
+| Ver lecturas de la casa | ✅ | ✅ | ✅ |
 | Registrar, editar y borrar **sus** lecturas | ✅ | ✅ | ❌ |
 | Editar o borrar lecturas de otro | ❌ | ❌ | ❌ |
 | Cambiar su propia contraseña | ✅ | ✅ | ❌ |
