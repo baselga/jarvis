@@ -2,7 +2,7 @@
 
 Alcance reducido: usuarios, roles y autenticación, más la **biblioteca** (libros, autores, géneros, sagas, préstamos y lecturas) en la API. Compra, tareas y recetas quedan para fases futuras. Glosario: `docs/dominio.md`.
 
-Dos bloques, cada uno revisable por separado: **1a** auth y usuarios, **1b** biblioteca en la API. La web `/gestion` (antes bloque 1c, tareas 15–20) pasa a la fase 2, que se planifica con su propia entrevista.
+Tres bloques, cada uno revisable por separado: **1a** auth y usuarios, **1b** biblioteca en la API, **1c** cierre de la API (deuda y huecos que notarían la web y el asistente). La web `/gestion` pasa a la fase 2, que se planifica con su propia entrevista y numera sus tareas desde 1.
 
 ## Decisiones
 
@@ -42,16 +42,32 @@ Dos bloques, cada uno revisable por separado: **1a** auth y usuarios, **1b** bib
 13. [x] **Préstamos:** prestar (409 si ya está prestado), devolver, historial por libro y préstamos activos. Tests: permisos por rol, doble préstamo → 409.
 14. [x] **Lecturas:** CRUD de lecturas propias (inicio opcional, fin, valoración 1–5 y nota opcionales), ver las de la casa por libro y por usuario. Tests: invitado ve las de la casa pero no crea, edita ni borra (403), no puedo editar/borrar lecturas de otro → 403, admin tampoco.
 
+### 1c — Cierre de la API
+
+Criterio: lo que es de la API y van a necesitar la web (fase 2) o el asistente (fase 3) se hace ahora, para que la fase 2 sea solo front. El límite de intentos de login y la imagen `prod` (migraciones y seed al arrancar) quedan para la fase 4, al desplegar.
+
+15. [ ] **Ordenar imports:** regla de ESLint para todo el monorepo y autofix. Va primero para que el código nuevo ya la siga; no cambia comportamiento.
+16. [ ] **503 si cae la BD:** `setErrorHandler` global que traduce los fallos de conexión a 503. Tests: BD inaccesible en una ruta protegida → 503.
+17. [ ] **Emails en minúsculas en BD:** migración que normaliza los existentes y añade `check (email = lower(email))`. Tests: insertar un email con mayúsculas directamente en la BD falla.
+18. [ ] **Búsqueda sin tildes:** extensión `unaccent` en los cuatro listados con `q`. Tests: «garcia» encuentra «García» en libros y autores, y al revés.
+19. [ ] **`PATCH /auth/me`:** editar el propio nombre. El spec decide si también el email y si el invitado (cuenta compartida) puede (propuesta: no). Tests: permisos por rol, no se puede cambiar el rol ni el estado por esta vía.
+20. [ ] **Corregir y borrar préstamos:** `PATCH`/`DELETE /loans/:id`. El spec fija qué roles pueden, si se puede «desdevolver» uno devuelto y cómo se evita que queden dos préstamos activos del mismo libro. Tests: permisos por rol, conflicto de préstamos activos → 409.
+21. [ ] **Fecha por defecto con `HOME_TZ`:** si no llega fecha, préstamos y lecturas usan «hoy» en la zona horaria de casa (`Europe/Madrid` en `.env.example`). Tests: sin fecha se rellena con la de `HOME_TZ`, no con la del servidor.
+22. [ ] **Datos de ejemplo:** script de desarrollo, separado de `db:seed`, que crea unas decenas de libros con autores (algunos con tildes), géneros y sagas, préstamos, lecturas y un usuario adulto y otro invitado. Se niega a ejecutarse en producción.
+
 ## Tests
 
-- Obligatorios (auth, roles, permisos): tareas 4–7, 9–11, 13 y 14, todos contra Postgres real con `inject()`.
-- Tarea 12: búsqueda y filtros, porque es lógica SQL fácil de romper.
+- Obligatorios (auth, roles, permisos): tareas 4–7, 9–11, 13, 14, 19 y 20, todos contra Postgres real con `inject()`.
+- Tareas 12 y 18: búsqueda y filtros, porque es lógica SQL fácil de romper.
+- Tareas 16, 17 y 21: el comportamiento nuevo de cada una (503, restricción de la BD, fecha por defecto).
+- Tareas 15 y 22: sin tests; basta con que `pnpm -r lint` pase y el script se ejecute sobre una BD vacía.
 
 ## Terminada cuando
 
 - La API permite iniciar sesión y gestionar libros, autores, géneros, sagas, préstamos, lecturas y usuarios.
 - Los tests prueban que un invitado ve la biblioteca y no puede modificar nada, y que un adulto no gestiona usuarios ni toca lecturas ajenas.
 - `/docs` muestra la API documentada.
+- La deuda de la API que no depende del despliegue está resuelta (bloque 1c) y hay datos de ejemplo para empezar la web.
 - `docker compose up -d` levanta `postgres` y `api`; `pnpm -r typecheck`, `pnpm -r test` y `pnpm -r lint` pasan.
 
 ## Notas
