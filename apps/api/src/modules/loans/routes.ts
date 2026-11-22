@@ -34,6 +34,8 @@ const returnedBeforeLoaned = badRequest('La devolución no puede ser anterior al
 // Devolver es una ruta de acción (`POST /loans/:id/return`): tiene reglas propias (solo una
 // vez) y la intención queda explícita. `PATCH /loans/:id` es la herramienta de corrección
 // (sin reglas de flujo; las invariantes las protege la BD en ambas vías).
+// Prestar y devolver sin fecha usan hoy en la zona de casa (`app.today()`). El valor por
+// defecto se pone aquí, en la capa HTTP: el servicio recibe la fecha ya resuelta.
 export const loanRoutes: FastifyPluginAsyncZod = async (app) => {
   app.addHook('onRequest', app.authenticate);
   const canWrite = requireRole('admin', 'adult');
@@ -45,6 +47,7 @@ export const loanRoutes: FastifyPluginAsyncZod = async (app) => {
       schema: {
         tags: ['loans'],
         summary: 'Presta un libro',
+        description: 'Sin loanedAt, la fecha del préstamo es hoy en la zona de casa (HOME_TZ).',
         security: sessionSecurity,
         params: BookIdParamsSchema,
         body: CreateLoanRequestSchema,
@@ -58,7 +61,10 @@ export const loanRoutes: FastifyPluginAsyncZod = async (app) => {
       },
     },
     async (request, reply) => {
-      const result = await createLoan(app.db, request.params.id, request.body);
+      const result = await createLoan(app.db, request.params.id, {
+        borrower: request.body.borrower,
+        loanedAt: request.body.loanedAt ?? app.today(),
+      });
       switch (result.status) {
         case 'ok':
           return reply.code(201).send(result.loan);
@@ -77,6 +83,8 @@ export const loanRoutes: FastifyPluginAsyncZod = async (app) => {
       schema: {
         tags: ['loans'],
         summary: 'Registra la devolución de un préstamo',
+        description:
+          'Sin returnedAt (o sin cuerpo), la fecha de devolución es hoy en la zona de casa (HOME_TZ).',
         security: sessionSecurity,
         params: LoanIdParamsSchema,
         body: ReturnLoanRequestSchema,
@@ -90,7 +98,8 @@ export const loanRoutes: FastifyPluginAsyncZod = async (app) => {
       },
     },
     async (request, reply) => {
-      const result = await returnLoan(app.db, request.params.id, request.body.returnedAt);
+      const returnedAt = request.body?.returnedAt ?? app.today();
+      const result = await returnLoan(app.db, request.params.id, returnedAt);
       switch (result.status) {
         case 'ok':
           return result.loan;

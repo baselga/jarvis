@@ -34,7 +34,8 @@ export const readingDateMessages = {
 const finishedAfterStarted = (body: { startedAt?: string | null; finishedAt?: string | null }) =>
   body.startedAt == null || body.finishedAt == null || body.finishedAt >= body.startedAt;
 
-// El usuario no va en el cuerpo: la lectura es siempre del de la sesión.
+// El usuario no va en el cuerpo: la lectura es siempre del de la sesión. Sin ninguna fecha
+// (o sin cuerpo), la API pone `startedAt` = hoy en la zona de casa: «empiezo a leerlo».
 export const CreateReadingRequestSchema = z
   .object({
     startedAt: DateSchema.optional(),
@@ -42,13 +43,12 @@ export const CreateReadingRequestSchema = z
     rating: RatingSchema.optional(),
     note: ReadingNoteSchema.optional(),
   })
-  .refine((body) => body.startedAt !== undefined || body.finishedAt !== undefined, {
-    message: readingDateMessages.noDate,
-  })
   .refine(finishedAfterStarted, {
     message: readingDateMessages.finishedBeforeStarted,
     path: ['finishedAt'],
-  });
+  })
+  // `.nullish()` y no `.optional()`: Fastify valida un cuerpo ausente como `null`.
+  .nullish();
 
 export type CreateReadingRequest = z.infer<typeof CreateReadingRequestSchema>;
 

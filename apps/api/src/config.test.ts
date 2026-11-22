@@ -20,4 +20,20 @@ describe('loadConfig', () => {
   it('falla si falta DATABASE_URL', () => {
     expect(() => loadConfig({})).toThrow(/DATABASE_URL/);
   });
+
+  describe('HOME_TZ', () => {
+    it('por defecto es Europe/Madrid', () => {
+      expect(loadConfig({ DATABASE_URL }).HOME_TZ).toBe('Europe/Madrid');
+    });
+
+    it('respeta una zona válida', () => {
+      expect(loadConfig({ DATABASE_URL, HOME_TZ: 'America/New_York' }).HOME_TZ).toBe(
+        'America/New_York',
+      );
+    });
+
+    it('falla con una zona desconocida', () => {
+      expect(() => loadConfig({ DATABASE_URL, HOME_TZ: 'Europa/Madrid' })).toThrow(/HOME_TZ/);
+    });
+  });
 });

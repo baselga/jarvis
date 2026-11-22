@@ -1,8 +1,10 @@
 import cookie from '@fastify/cookie';
+import type { DateString } from '@jarvis/schemas';
 import Fastify, { type FastifyServerOptions } from 'fastify';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 
 import { authPlugin } from './auth/authenticate.js';
+import { DEFAULT_HOME_TZ, todayIn } from './dates.js';
 import type { Db } from './db/client.js';
 import { errorHandler } from './error-handler.js';
 import { authRoutes } from './modules/auth/routes.js';
@@ -19,6 +21,8 @@ import { registerOpenApi } from './openapi.js';
 declare module 'fastify' {
   interface FastifyInstance {
     db: Db;
+    // Hoy en la zona de casa (`HOME_TZ`), para las fechas por defecto.
+    today(): DateString;
   }
 }
 
@@ -27,17 +31,25 @@ export interface BuildAppOptions {
   db: Db;
   // Cookie de sesión solo por HTTPS; `server.ts` la activa en producción.
   cookieSecure?: boolean;
+  // Zona IANA de casa (`HOME_TZ`); los tests la eligen sin tocar el entorno.
+  homeTimeZone?: string;
 }
 
 // Construye la app sin arrancar el servidor: los tests la usan con `inject()`
 // y `server.ts` la pone a escuchar en un puerto. La BD se recibe desde fuera
 // para que los tests puedan pasar una simulada.
-export function buildApp({ logger = false, db, cookieSecure = false }: BuildAppOptions) {
+export function buildApp({
+  logger = false,
+  db,
+  cookieSecure = false,
+  homeTimeZone = DEFAULT_HOME_TZ,
+}: BuildAppOptions) {
   const app = Fastify({ logger });
   // Los esquemas Zod de cada ruta validan la entrada y también la respuesta.
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
   app.decorate('db', db);
+  app.decorate('today', () => todayIn(homeTimeZone));
   // Antes que plugins y rutas: lo heredan todos por encapsulación.
   app.setErrorHandler(errorHandler);
   // Muchos clientes envían `Content-Type: application/json` siempre, también en

@@ -26,6 +26,7 @@ services:
     restart: unless-stopped
     environment:
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      HOME_TZ: ${HOME_TZ:-Europe/Madrid}
       # "postgres" es el nombre del servicio: la red de Compose lo resuelve.
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       # BD de los tests (se crea y migra sola al lanzarlos).
