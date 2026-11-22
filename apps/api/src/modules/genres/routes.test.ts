@@ -296,6 +296,16 @@ describe('listado de /genres', () => {
     expect(res.json()).toMatchObject({ total: 2 });
   });
 
+  it('q no distingue tildes: «ficcion» encuentra «Ciencia ficción»', async () => {
+    await createGenre({ name: 'Ciencia ficción' });
+    await createGenre({ name: 'Poesía' });
+
+    const res = await list('?q=ficcion');
+
+    expect(names(res)).toEqual(['Ciencia ficción']);
+    expect(res.json()).toMatchObject({ total: 1 });
+  });
+
   it.each(['%', '_'])('q=%s solo coincide con nombres que contienen ese carácter', async (q) => {
     await createGenre({ name: '100% Real' });
     await createGenre({ name: 'a_b' });

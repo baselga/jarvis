@@ -296,6 +296,26 @@ describe('listado de /authors', () => {
     expect(res.json()).toMatchObject({ total: 2 });
   });
 
+  it('q no distingue tildes: «garcia» encuentra «García»', async () => {
+    await createAuthor({ name: 'García Márquez, Gabriel' });
+    await createAuthor({ name: 'Austen, Jane' });
+
+    const res = await list('?q=garcia');
+
+    expect(names(res)).toEqual(['García Márquez, Gabriel']);
+    expect(res.json()).toMatchObject({ total: 1 });
+  });
+
+  it('q no distingue tildes en el otro sentido: «García» encuentra «Garcia»', async () => {
+    await createAuthor({ name: 'Garcia, Ana' });
+    await createAuthor({ name: 'Austen, Jane' });
+
+    const res = await list(`?q=${encodeURIComponent('García')}`);
+
+    expect(names(res)).toEqual(['Garcia, Ana']);
+    expect(res.json()).toMatchObject({ total: 1 });
+  });
+
   it.each(['%', '_'])('q=%s solo coincide con nombres que contienen ese carácter', async (q) => {
     await createAuthor({ name: '100% Real' });
     await createAuthor({ name: 'a_b' });

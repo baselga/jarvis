@@ -295,6 +295,16 @@ describe('listado de /sagas', () => {
     expect(res.json()).toMatchObject({ total: 2 });
   });
 
+  it('q ignora tildes y la ñ: «senor» encuentra «El Señor de los Anillos»', async () => {
+    await createSaga({ name: 'El Señor de los Anillos' });
+    await createSaga({ name: 'Dune' });
+
+    const res = await list('?q=senor');
+
+    expect(names(res)).toEqual(['El Señor de los Anillos']);
+    expect(res.json()).toMatchObject({ total: 1 });
+  });
+
   it.each(['%', '_'])('q=%s solo coincide con nombres que contienen ese carácter', async (q) => {
     await createSaga({ name: '100% Real' });
     await createSaga({ name: 'a_b' });
