@@ -1,6 +1,6 @@
 ---
 name: jarvis-finish
-description: Paso 4 de 4 de una tarea en Jarvis. Usar con `/jarvis-finish [N]` para dar por terminada la tarea N (por defecto, la tarea activa), marcarla en el plan de la fase y llevar lo que haga falta a la documentación y el contexto de la aplicación.
+description: Paso 4 de 4 de una tarea en Jarvis. Usar con `/jarvis-finish [N]` para dar por terminada la tarea N (por defecto, la tarea activa), marcarla en el plan de la fase y llevar lo que haga falta a la documentación y el contexto de la aplicación, y opcionalmente hacer commit, push y PR a `master`.
 argument-hint: "[N]"
 disable-model-invocation: true
 ---
@@ -15,7 +15,7 @@ Flujo: `/jarvis-spec` → `/jarvis-implement` → `/jarvis-review` → **`/jarvi
 **Archivo de la tarea:** `docs/fases/fase-F/tarea-N.md`. Su cabecera es una tabla `| Campo | Valor |` (`Estado`, `Tamaño`, `Fase`, `Plan`); para cambiar un campo, edita solo su fila.
 **Estados:** `especificada` → `en curso` → `implementada` → `revisada` → `terminada`.
 
-No hagas commits. Si el `Estado` no es `revisada`, dime qué paso falta y para.
+No hagas commits salvo en el paso 6, si te lo confirmo. Si el `Estado` no es `revisada`, dime qué paso falta y para.
 
 ## Pasos
 
@@ -31,4 +31,15 @@ No hagas commits. Si el `Estado` no es `revisada`, dime qué paso falta y para.
 3. **Marca la tarea** `[x]` en `fase-F-plan.md`. Si durante la tarea cambió algo del plan (decisión, alcance de otra tarea), actualízalo.
 4. **Rellena "Cierre"** en `tarea-N.md`: qué quedó documentado y dónde, y deuda o pendientes para otras tareas. Si durante la implementación aparecieron conceptos de backend que no estaban en "Conceptos nuevos", añádelos allí. Pon `Estado` en `terminada`.
 5. **Libera la tarea activa:** cambia la línea del `CLAUDE.md` raíz a `Tarea activa: ninguna (siguiente: <primera tarea sin [x] del plan>)`, o `Tarea activa: ninguna` si era la última.
-6. **Resumen final:** 2-3 líneas y el mensaje de commit propuesto (sin hacerlo). Recuérdame commitear antes de seguir: `/jarvis-spec` y `/jarvis-review` cuentan con que el árbol de trabajo solo tenga la tarea en curso. Después, la siguiente tarea del plan (`/clear` y `/jarvis-spec`), o `/jarvis-phase close F` si era la última.
+6. **Commit y PR.** Propón el mensaje de commit (mismo formato que los commits recientes, p. ej. `feat(api): … (tarea N)`) y muéstrame `git status --short`. Si incluye archivos ajenos a la tarea, avísame.
+   - Si la rama actual es `feature/F-N/…`, pregúntame si hago commit, push y PR a `master`. Si la rama ya tiene un PR abierto (`gh pr view`), pregunta solo por commit y push.
+   - Si no es una rama de desarrollo, no ofrezcas PR: el mensaje queda propuesto, sin commitear.
+   Si digo que sí:
+   1. `git add -A` y `git commit` con el mensaje, sin línea `Co-Authored-By`.
+   2. `git push -u origin <rama>`, nunca con `--force`. Si falla, dímelo y para.
+   3. `gh pr create --base master --head <rama>`: título, el asunto del commit; cuerpo, sacado de `tarea-N.md` (resumen, decisiones clave, tests añadidos y enlace a `docs/fases/fase-F/tarea-N.md`), sin el pie "Generated with Claude Code".
+   No mergees el PR.
+7. **Resumen final:** 2-3 líneas.
+   - Con PR: su URL, y recuérdame mergearlo antes de seguir: `/jarvis-spec` parte de `master` actualizado y comprueba que las tareas anteriores estén `[x]`.
+   - Sin commit: el mensaje propuesto, y recuérdame commitear antes de seguir: `/jarvis-spec` y `/jarvis-review` cuentan con que el árbol de trabajo solo tenga la tarea en curso.
+   Después, la siguiente tarea del plan (`/clear` y `/jarvis-spec`), o `/jarvis-phase close F` si era la última.

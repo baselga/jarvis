@@ -11,8 +11,8 @@ Tarea activa: 15 (bloque 1c, cierre de la API: tareas 15–22)
 ## Forma de trabajar
 
 - Cada fase empieza con `/jarvis-phase N`: entrevista → resumen → mi confirmación → plan de tareas. No implementes nada de una fase sin ese acuerdo.
-- Cada tarea del plan pasa por `/jarvis-spec` → `/jarvis-implement` → `/jarvis-review` → `/jarvis-finish`, en sesiones separadas que se comunican por `docs/fases/fase-F/tarea-N.md`. El número de tarea es opcional: se toma de `Tarea activa`. Commit al terminar cada tarea, antes de la siguiente.
-- No hagas commits salvo que te lo pida expresamente; como mucho, propón el mensaje.
+- Cada tarea del plan pasa por `/jarvis-spec` → `/jarvis-implement` → `/jarvis-review` → `/jarvis-finish`, en sesiones separadas que se comunican por `docs/fases/fase-F/tarea-N.md`. El número de tarea es opcional: se toma de `Tarea activa`. Commit al terminar cada tarea (y, si `/jarvis-finish` abrió PR, mergearlo) antes de la siguiente.
+- No hagas commits salvo que te lo pida expresamente (confirmar el commit/PR que propone `/jarvis-finish` cuenta); como mucho, propón el mensaje.
 - Estoy aprendiendo backend (vengo de front con React + Vite): explica el porqué de las decisiones importantes, de forma breve. Las explicaciones largas van al resumen de la fase, no en cada cambio.
 - Tareas pequeñas y revisables. Si una tarea crece, para y propón dividirla.
 - Responde en español.
