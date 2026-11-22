@@ -6,6 +6,7 @@ import type {
   UpdateReadingRequest,
 } from '@jarvis/schemas';
 import { and, count, desc, eq, sql } from 'drizzle-orm';
+
 import type { DbOrTx } from '../../db/client.js';
 import { constraintOf, isCheckViolation, isForeignKeyViolation } from '../../db/errors.js';
 import { books, readings, users } from '../../db/schema/index.js';

@@ -46,7 +46,7 @@ Tres bloques, cada uno revisable por separado: **1a** auth y usuarios, **1b** bi
 
 Criterio: lo que es de la API y van a necesitar la web (fase 2) o el asistente (fase 3) se hace ahora, para que la fase 2 sea solo front. El límite de intentos de login y la imagen `prod` (migraciones y seed al arrancar) quedan para la fase 4, al desplegar.
 
-15. [ ] **Ordenar imports:** regla de ESLint para todo el monorepo y autofix. Va primero para que el código nuevo ya la siga; no cambia comportamiento.
+15. [x] **Ordenar imports:** regla de ESLint para todo el monorepo y autofix. Va primero para que el código nuevo ya la siga; no cambia comportamiento.
 16. [ ] **503 si cae la BD:** `setErrorHandler` global que traduce los fallos de conexión a 503. Tests: BD inaccesible en una ruta protegida → 503.
 17. [ ] **Emails en minúsculas en BD:** migración que normaliza los existentes y añade `check (email = lower(email))`. Tests: insertar un email con mayúsculas directamente en la BD falla.
 18. [ ] **Búsqueda sin tildes:** extensión `unaccent` en los cuatro listados con `q`. Tests: «garcia» encuentra «García» en libros y autores, y al revés.
@@ -86,3 +86,4 @@ Criterio: lo que es de la API y van a necesitar la web (fase 2) o el asistente (
 - Listado de libros (tarea 12): `GET /books` devuelve `{ books: BookDetail[], total }` con `q`, `authorId`, `genreId`, `sagaId` y `loaned` (`true`/`false` exactos; si no, 400), combinados con AND; un id inexistente da lista vacía. La web (fase 2) usa esos nombres y omite `q` vacío. Relaciones de una lista con `withRelations` (`modules/books/service.ts`), reutilizable para los préstamos activos de la tarea 13. `bookColumns` exportado desde ahí.
 - Préstamos (tarea 13): `modules/loans/` con `POST /books/:id/loans`, `POST /loans/:id/return`, `GET /books/:id/loans` y `GET /loans/active` (`ActiveLoan` incluye el `BookDetail`). DTOs en `packages/schemas/src/loan-detail.ts`. Las fechas son obligatorias: la web (fase 2) envía la fecha de hoy del usuario.
 - Lecturas (tarea 14): `modules/readings/` con `GET /readings?bookId=&userId=` (cada elemento lleva `user: { id, name }` y `book: { id, title }`; «mis lecturas» = `?userId=<id de /auth/me>`), `POST /books/:id/readings` y `PATCH`/`DELETE /readings/:id` (solo el dueño, ni el admin). El invitado ve, pero no escribe. En `PATCH`, `null` vacía un campo y si no se envía no se toca. `createReading` en `test/helpers.ts` y `readingDateMessages` en `@jarvis/schemas`. La web (fase 2) usa estos contratos.
+- Imports (tarea 15): `simple-import-sort` (imports y `export … from`) en `error` para todo el monorepo; si `lint` falla por orden, `pnpm -r lint --fix`.

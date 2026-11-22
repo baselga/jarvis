@@ -1,4 +1,5 @@
 import type { Email } from '@jarvis/schemas';
+
 import { hashPassword } from '../auth/password.js';
 import type { Db } from './client.js';
 import { users } from './schema/index.js';

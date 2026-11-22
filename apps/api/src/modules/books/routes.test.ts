@@ -1,6 +1,7 @@
 import type { BookDetail, BookListResponse, Role } from '@jarvis/schemas';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
 import {
   authors,
   bookAuthors,

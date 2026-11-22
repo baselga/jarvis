@@ -1,4 +1,5 @@
 import { z } from 'zod';
+
 import { DateSchema } from './date.js';
 
 export const BorrowerSchema = z.string().trim().min(1).max(100);

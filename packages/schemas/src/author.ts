@@ -1,4 +1,5 @@
 import { z } from 'zod';
+
 import { PaginationQuerySchema } from './pagination.js';
 
 export const AuthorNameSchema = z.string().trim().min(1).max(200);

@@ -10,6 +10,7 @@ import {
 import { eq } from 'drizzle-orm';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
+
 import { authErrorResponses, requireRole, sessionSecurity } from '../../auth/authenticate.js';
 import { hashPassword } from '../../auth/password.js';
 import { deleteUserSessions } from '../../auth/session.js';

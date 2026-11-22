@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { loadConfig } from './config.js';
 
 const DATABASE_URL = 'postgres://jarvis:jarvis@localhost:5432/jarvis';

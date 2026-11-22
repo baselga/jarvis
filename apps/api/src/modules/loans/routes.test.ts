@@ -8,6 +8,7 @@ import type {
 import { eq } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
 import { loans } from '../../db/schema/index.js';
 import {
   buildTestApp,

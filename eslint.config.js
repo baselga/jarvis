@@ -1,6 +1,7 @@
 import js from '@eslint/js';
 import { defineConfig, globalIgnores } from 'eslint/config';
 import prettier from 'eslint-config-prettier';
+import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
@@ -28,6 +29,14 @@ export default defineConfig(
     // Archivos de configuración en JS: fuera de los tsconfig, sin reglas de tipos.
     files: ['**/*.js', '**/*.mjs'],
     extends: [tseslint.configs.disableTypeChecked],
+  },
+  {
+    // Imports y `export ... from` ordenados (grupos por defecto); `--fix` los ordena.
+    plugins: { 'simple-import-sort': simpleImportSort },
+    rules: {
+      'simple-import-sort/imports': 'error',
+      'simple-import-sort/exports': 'error',
+    },
   },
   // Siempre al final: desactiva las reglas de estilo que ya cubre Prettier.
   prettier,

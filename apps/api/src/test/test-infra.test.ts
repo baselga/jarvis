@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
+
 import { describe, expect, it } from 'vitest';
+
 import { verifyPassword } from '../auth/password.js';
 import { users } from '../db/schema/index.js';
 import { assertTestDatabaseUrl } from './env.js';

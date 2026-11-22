@@ -2,6 +2,7 @@ import { MeResponseSchema, type Role, UserListResponseSchema, UserSchema } from 
 import { eq } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
 import { sessions, users } from '../../db/schema/index.js';
 import { buildTestApp, createSession, createUser, testDb } from '../../test/helpers.js';
 

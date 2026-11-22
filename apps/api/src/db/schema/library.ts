@@ -13,6 +13,7 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
+
 import { users } from './users.js';
 
 // Las reglas del dominio van también en la BD (`check`, índice único parcial,
