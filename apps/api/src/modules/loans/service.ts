@@ -1,4 +1,4 @@
-import type { ActiveLoan, CreateLoanRequest, Loan } from '@jarvis/schemas';
+import type { ActiveLoan, CreateLoanRequest, Loan, UpdateLoanRequest } from '@jarvis/schemas';
 import { and, asc, desc, eq, isNull } from 'drizzle-orm';
 
 import type { DbOrTx } from '../../db/client.js';
@@ -14,6 +14,14 @@ export type ReturnLoanResult =
   | { status: 'not_found' }
   | { status: 'already_returned' }
   | { status: 'returned_before_loaned' };
+
+export type UpdateLoanResult =
+  | { status: 'ok'; loan: Loan }
+  | { status: 'not_found' }
+  | { status: 'returned_before_loaned' }
+  | { status: 'already_loaned' };
+
+export type DeleteLoanResult = { status: 'ok' } | { status: 'not_found' };
 
 export type ListBookLoansResult = { status: 'ok'; loans: Loan[] } | { status: 'book_not_found' };
 
@@ -59,6 +67,35 @@ export async function returnLoan(
   }
   const [existing] = await db.select({ id: loans.id }).from(loans).where(eq(loans.id, id));
   return existing ? { status: 'already_returned' } : { status: 'not_found' };
+}
+
+// Corrección sin reglas de flujo: vale en cualquier estado. Las invariantes las pone la BD
+// (`loans_returned_after_loaned` y `loans_active_book_idx` al «desdevolver»), así que no se
+// lee antes. El `WHERE` solo filtra por id: sin fila devuelta, el préstamo no existe.
+export async function updateLoan(
+  db: DbOrTx,
+  id: string,
+  { borrower, loanedAt, returnedAt }: UpdateLoanRequest,
+): Promise<UpdateLoanResult> {
+  try {
+    // Drizzle omite las claves `undefined` del `SET`; `null` sí se escribe.
+    const [loan] = await db
+      .update(loans)
+      .set({ borrower, loanedAt, returnedAt })
+      .where(eq(loans.id, id))
+      .returning(loanColumns);
+    return loan ? { status: 'ok', loan } : { status: 'not_found' };
+  } catch (error) {
+    if (isCheckViolation(error)) return { status: 'returned_before_loaned' };
+    if (isUniqueViolation(error)) return { status: 'already_loaned' };
+    throw error;
+  }
+}
+
+// Borra de verdad, esté activo o devuelto: un préstamo registrado por error no es historia.
+export async function deleteLoan(db: DbOrTx, id: string): Promise<DeleteLoanResult> {
+  const [deleted] = await db.delete(loans).where(eq(loans.id, id)).returning({ id: loans.id });
+  return deleted ? { status: 'ok' } : { status: 'not_found' };
 }
 
 // Se comprueba que el libro existe: la lista vacía no distingue «sin préstamos» de «no existe».

@@ -23,6 +23,26 @@ export const ReturnLoanRequestSchema = z.object({ returnedAt: DateSchema });
 
 export type ReturnLoanRequest = z.infer<typeof ReturnLoanRequestSchema>;
 
+// Corrección de un préstamo: ausente = no tocar; `returnedAt: null` = vuelve a estar prestado.
+// Estricto: el libro no se cambia, y enviar `bookId` da 400 en vez de ignorarse en silencio.
+// Las reglas que dependen de lo guardado (devolución ≥ préstamo, un solo préstamo activo por
+// libro) las comprueba la BD.
+export const UpdateLoanRequestSchema = z
+  .strictObject({
+    borrower: BorrowerSchema.optional(),
+    loanedAt: DateSchema.optional(),
+    returnedAt: DateSchema.nullable().optional(),
+  })
+  .refine((body) => Object.values(body).some((value) => value !== undefined), {
+    message: 'Indica al menos un campo que cambiar',
+  })
+  .refine(
+    (body) => body.loanedAt == null || body.returnedAt == null || body.returnedAt >= body.loanedAt,
+    { message: 'La devolución no puede ser anterior al préstamo', path: ['returnedAt'] },
+  );
+
+export type UpdateLoanRequest = z.infer<typeof UpdateLoanRequestSchema>;
+
 // Historial de un libro: del préstamo más reciente al más antiguo.
 export const BookLoansResponseSchema = z.object({ loans: z.array(LoanSchema) });
 

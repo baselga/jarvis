@@ -51,7 +51,7 @@ Criterio: lo que es de la API y van a necesitar la web (fase 2) o el asistente (
 17. [x] **Emails en minúsculas en BD:** migración que normaliza los existentes y añade `check (email = lower(email))`. Tests: insertar un email con mayúsculas directamente en la BD falla.
 18. [x] **Búsqueda sin tildes:** extensión `unaccent` en los cuatro listados con `q`. Tests: «garcia» encuentra «García» en libros y autores, y al revés.
 19. [x] **`PATCH /auth/me`:** editar el propio nombre. El spec decide si también el email y si el invitado (cuenta compartida) puede (propuesta: no). Tests: permisos por rol, no se puede cambiar el rol ni el estado por esta vía.
-20. [ ] **Corregir y borrar préstamos:** `PATCH`/`DELETE /loans/:id`. El spec fija qué roles pueden, si se puede «desdevolver» uno devuelto y cómo se evita que queden dos préstamos activos del mismo libro. Tests: permisos por rol, conflicto de préstamos activos → 409.
+20. [x] **Corregir y borrar préstamos:** `PATCH`/`DELETE /loans/:id`. El spec fija qué roles pueden, si se puede «desdevolver» uno devuelto y cómo se evita que queden dos préstamos activos del mismo libro. Tests: permisos por rol, conflicto de préstamos activos → 409.
 21. [ ] **Fecha por defecto con `HOME_TZ`:** si no llega fecha, préstamos y lecturas usan «hoy» en la zona horaria de casa (`Europe/Madrid` en `.env.example`). Tests: sin fecha se rellena con la de `HOME_TZ`, no con la del servidor.
 22. [ ] **Datos de ejemplo:** script de desarrollo, separado de `db:seed`, que crea unas decenas de libros con autores (algunos con tildes), géneros y sagas, préstamos, lecturas y un usuario adulto y otro invitado. Se niega a ejecutarse en producción.
 
@@ -91,3 +91,4 @@ Criterio: lo que es de la API y van a necesitar la web (fase 2) o el asistente (
 - Emails (tarea 17): `expectPgCode` en `test/helpers.ts` para probar reglas de la BD. Si una restricción nueva no la cumplirían filas existentes, el `UPDATE` va en el mismo SQL antes del `ALTER` (ver `apps/api/drizzle/0002_sour_azazel.sql`).
 - Búsqueda (tarea 18): `containsText(col, q)` en `db/search.ts` para cualquier `q` nuevo (sin mayúsculas ni tildes; la ñ también se ignora). La BD de desarrollo recibe `unaccent` al reiniciar `api`.
 - Perfil (tarea 19): `PATCH /auth/me` solo cambia `name` (admin y adulto; invitado 403; claves extra → 400 por `z.strictObject`) y responde como `GET /auth/me`. La pantalla de perfil de la web (fase 2) usa este contrato; el email lo cambia el admin.
+- Préstamos (tarea 20): `PATCH`/`DELETE /loans/:id` (admin y adulto). `PATCH` admite `borrower`, `loanedAt` y `returnedAt` (`null` = deshacer la devolución); `bookId` → 400. La web (fase 2) usa estos contratos.
