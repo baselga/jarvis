@@ -48,7 +48,7 @@ Criterio: lo que es de la API y van a necesitar la web (fase 2) o el asistente (
 
 15. [x] **Ordenar imports:** regla de ESLint para todo el monorepo y autofix. Va primero para que el código nuevo ya la siga; no cambia comportamiento.
 16. [x] **503 si cae la BD:** `setErrorHandler` global que traduce los fallos de conexión a 503. Tests: BD inaccesible en una ruta protegida → 503.
-17. [ ] **Emails en minúsculas en BD:** migración que normaliza los existentes y añade `check (email = lower(email))`. Tests: insertar un email con mayúsculas directamente en la BD falla.
+17. [x] **Emails en minúsculas en BD:** migración que normaliza los existentes y añade `check (email = lower(email))`. Tests: insertar un email con mayúsculas directamente en la BD falla.
 18. [ ] **Búsqueda sin tildes:** extensión `unaccent` en los cuatro listados con `q`. Tests: «garcia» encuentra «García» en libros y autores, y al revés.
 19. [ ] **`PATCH /auth/me`:** editar el propio nombre. El spec decide si también el email y si el invitado (cuenta compartida) puede (propuesta: no). Tests: permisos por rol, no se puede cambiar el rol ni el estado por esta vía.
 20. [ ] **Corregir y borrar préstamos:** `PATCH`/`DELETE /loans/:id`. El spec fija qué roles pueden, si se puede «desdevolver» uno devuelto y cómo se evita que queden dos préstamos activos del mismo libro. Tests: permisos por rol, conflicto de préstamos activos → 409.
@@ -88,3 +88,4 @@ Criterio: lo que es de la API y van a necesitar la web (fase 2) o el asistente (
 - Lecturas (tarea 14): `modules/readings/` con `GET /readings?bookId=&userId=` (cada elemento lleva `user: { id, name }` y `book: { id, title }`; «mis lecturas» = `?userId=<id de /auth/me>`), `POST /books/:id/readings` y `PATCH`/`DELETE /readings/:id` (solo el dueño, ni el admin). El invitado ve, pero no escribe. En `PATCH`, `null` vacía un campo y si no se envía no se toca. `createReading` en `test/helpers.ts` y `readingDateMessages` en `@jarvis/schemas`. La web (fase 2) usa estos contratos.
 - Imports (tarea 15): `simple-import-sort` (imports y `export … from`) en `error` para todo el monorepo; si `lint` falla por orden, `pnpm -r lint --fix`.
 - Errores (tarea 16): manejador global en `apps/api/src/error-handler.ts`. Las rutas no capturan errores de conexión ni declaran el 503: lo ponen el manejador y el `transform` de `openapi.ts`. Un 500 nunca enseña el mensaje interno. Para un código de BD nuevo que signifique «no disponible», se añade a `isDbUnavailable` (`db/errors.ts`).
+- Emails (tarea 17): `expectPgCode` en `test/helpers.ts` para probar reglas de la BD. Si una restricción nueva no la cumplirían filas existentes, el `UPDATE` va en el mismo SQL antes del `ALTER` (ver `apps/api/drizzle/0002_sour_azazel.sql`).
