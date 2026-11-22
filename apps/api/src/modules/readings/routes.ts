@@ -53,6 +53,8 @@ export const readingRoutes: FastifyPluginAsyncZod = async (app) => {
       schema: {
         tags: ['readings'],
         summary: 'Registra una lectura del usuario de la sesión',
+        description:
+          'Sin startedAt ni finishedAt (o sin cuerpo), startedAt es hoy en la zona de casa (HOME_TZ): queda «leyendo».',
         security: sessionSecurity,
         params: BookIdParamsSchema,
         body: CreateReadingRequestSchema,
@@ -65,7 +67,13 @@ export const readingRoutes: FastifyPluginAsyncZod = async (app) => {
       },
     },
     async (request, reply) => {
-      const result = await createReading(app.db, request.params.id, request.user.id, request.body);
+      const body = request.body ?? {};
+      // «Empiezo a leerlo»: sin ninguna fecha, empieza hoy. Si llega alguna, no se rellena nada.
+      const data =
+        body.startedAt === undefined && body.finishedAt === undefined
+          ? { ...body, startedAt: app.today() }
+          : body;
+      const result = await createReading(app.db, request.params.id, request.user.id, data);
       switch (result.status) {
         case 'ok':
           return reply.code(201).send(result.reading);

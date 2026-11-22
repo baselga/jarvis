@@ -8,6 +8,7 @@ const app = buildApp({
   logger: { level: config.LOG_LEVEL },
   db,
   cookieSecure: config.NODE_ENV === 'production',
+  homeTimeZone: config.HOME_TZ,
 });
 
 // Al cerrar la app (tras terminar las peticiones en curso) cerramos el pool de BD.

@@ -7,7 +7,7 @@ import type {
 } from '@jarvis/schemas';
 import { eq } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { loans } from '../../db/schema/index.js';
 import {
@@ -226,7 +226,6 @@ describe('POST /books/:id/loans', () => {
   it.each([
     ['borrower vacío', { borrower: '', loanedAt: '2026-03-01' }],
     ['borrower solo con espacios', { borrower: '   ', loanedAt: '2026-03-01' }],
-    ['sin loanedAt', { borrower: 'Marta' }],
     ['loanedAt inválido', { borrower: 'Marta', loanedAt: '2026-02-30' }],
     ['loanedAt con hora', { borrower: 'Marta', loanedAt: '2026-03-01T10:00:00Z' }],
   ])('%s da 400', async (_case, payload) => {
@@ -299,7 +298,6 @@ describe('POST /loans/:id/return', () => {
   });
 
   it.each([
-    ['sin returnedAt', null, {}],
     ['returnedAt inválido', null, { returnedAt: '2026-02-30' }],
     ['returnedAt con hora', null, { returnedAt: '2026-03-10T10:00:00Z' }],
     ['id no uuid', 'no-es-uuid', { returnedAt: '2026-03-10' }],
@@ -316,6 +314,87 @@ describe('POST /loans/:id/return', () => {
     });
 
     expect(response.statusCode).toBe(400);
+  });
+});
+
+// 23:30 UTC del 1 de marzo = 00:30 del 2 de marzo en Madrid: si la API usara la hora del
+// servidor (UTC) en vez de la de casa, saldría el día 1.
+describe('fecha por defecto: hoy en la zona de casa', () => {
+  beforeEach(() => {
+    // Antes de crear la sesión: su caducidad también usa `Date`.
+    vi.setSystemTime(new Date('2026-03-01T23:30:00Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('prestar sin loanedAt usa hoy en Madrid', async () => {
+    const headers = await headersFor('adult');
+    const book = await createBook();
+
+    const response = await lend(book.id, headers, { borrower: 'Marta' });
+
+    expect(response.statusCode).toBe(201);
+    expect(response.json<Loan>()).toMatchObject({ loanedAt: '2026-03-02', returnedAt: null });
+  });
+
+  it('prestar con loanedAt la respeta', async () => {
+    const headers = await headersFor('adult');
+    const book = await createBook();
+
+    const response = await lend(book.id, headers, { borrower: 'Marta', loanedAt: '2026-02-20' });
+
+    expect(response.statusCode).toBe(201);
+    expect(response.json<Loan>().loanedAt).toBe('2026-02-20');
+  });
+
+  it('la zona sale de la opción homeTimeZone', async () => {
+    const utcApp = buildTestApp({ homeTimeZone: 'UTC' });
+    const headers = await headersFor('adult');
+    const book = await createBook();
+
+    const response = await utcApp.inject({
+      method: 'POST',
+      url: `/books/${book.id}/loans`,
+      headers,
+      payload: { borrower: 'Marta' },
+    });
+    await utcApp.close();
+
+    expect(response.statusCode).toBe(201);
+    expect(response.json<Loan>().loanedAt).toBe('2026-03-01');
+  });
+
+  it.each([
+    // Sin cuerpo ni `Content-Type`, como haría un cliente con un POST «vacío».
+    ['sin cuerpo', undefined],
+    ['con {}', {}],
+  ])('devolver %s usa hoy en Madrid', async (_case, payload) => {
+    const headers = await headersFor('adult');
+    const book = await createBook();
+    const loan = await createLoan({ bookId: book.id, loanedAt: '2026-02-20' });
+
+    const response = await app.inject({
+      method: 'POST',
+      url: `/loans/${loan.id}/return`,
+      headers,
+      ...(payload && { payload }),
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json<Loan>().returnedAt).toBe('2026-03-02');
+  });
+
+  it('devolver con returnedAt la respeta', async () => {
+    const headers = await headersFor('adult');
+    const book = await createBook();
+    const loan = await createLoan({ bookId: book.id, loanedAt: '2026-02-20' });
+
+    const response = await giveBack(loan.id, headers, '2026-02-25');
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json<Loan>().returnedAt).toBe('2026-02-25');
   });
 });
 

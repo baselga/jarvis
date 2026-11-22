@@ -34,8 +34,8 @@ Reglas de usuarios:
 - **Autor** — nombre (no se puede repetir, sin distinguir mayúsculas). Un libro puede tener varios autores y un autor varios libros.
 - **Género** — nombre, no repetible sin distinguir mayúsculas ("Ciencia ficción", "Ensayo"…). Lista controlada que se edita desde la web; un libro puede tener varios.
 - **Saga** — nombre ("Fundación"), no repetible sin distinguir mayúsculas. Un libro pertenece como mucho a una, con un orden de lectura que admite decimales (2.5 para un relato intermedio). Puede haber dos libros con el mismo orden (p. ej. una edición ómnibus).
-- **Préstamo** — un libro dejado a alguien (texto libre, normalmente alguien sin cuenta), con fecha de préstamo y de devolución. Un libro está **prestado** si tiene un préstamo sin devolver; no se puede prestar dos veces a la vez.
-- **Lectura** — que un miembro ha leído un libro: fecha de inicio y de fin (al menos una de las dos; sin fin = «leyendo»), valoración de 1 a 5 y nota (opcionales). Se puede releer un libro, así que puede haber varias lecturas del mismo libro por persona.
+- **Préstamo** — un libro dejado a alguien (texto libre, normalmente alguien sin cuenta), con fecha de préstamo y de devolución (si no se indican, hoy en la zona horaria de casa). Un libro está **prestado** si tiene un préstamo sin devolver; no se puede prestar dos veces a la vez.
+- **Lectura** — que un miembro ha leído un libro: fecha de inicio y de fin (al menos una de las dos; si se registra sin ninguna, empieza hoy; sin fin = «leyendo»), valoración de 1 a 5 y nota (opcionales). Se puede releer un libro, así que puede haber varias lecturas del mismo libro por persona.
 
 Reglas:
 

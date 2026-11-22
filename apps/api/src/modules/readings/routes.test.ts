@@ -1,7 +1,7 @@
 import type { Reading, ReadingListResponse, Role } from '@jarvis/schemas';
 import { eq } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { books, readings } from '../../db/schema/index.js';
 import {
@@ -171,8 +171,6 @@ describe('POST /books/:id/readings', () => {
     const { headers } = await login('adult');
     const book = await createBook();
     const payloads = [
-      {},
-      { rating: 4 },
       { startedAt: '2026-03-10', finishedAt: '2026-03-01' },
       { startedAt: '2026-03-01', rating: 0 },
       { startedAt: '2026-03-01', rating: 6 },
@@ -206,6 +204,52 @@ describe('POST /books/:id/readings', () => {
     expect(first.statusCode).toBe(201);
     expect(second.statusCode).toBe(201);
     expect(await testDb.select().from(readings)).toHaveLength(2);
+  });
+});
+
+// 23:30 UTC del 1 de marzo = 00:30 del 2 de marzo en Madrid (la zona por defecto).
+describe('POST /books/:id/readings: fecha por defecto', () => {
+  beforeEach(() => {
+    // Antes de crear la sesión: su caducidad también usa `Date`.
+    vi.setSystemTime(new Date('2026-03-01T23:30:00Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('sin cuerpo empieza hoy en Madrid y queda «leyendo»', async () => {
+    const { headers } = await login('adult');
+    const book = await createBook();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: `/books/${book.id}/readings`,
+      headers,
+    });
+
+    expect(response.statusCode).toBe(201);
+    expect(response.json<Reading>()).toMatchObject({ startedAt: '2026-03-02', finishedAt: null });
+  });
+
+  it('solo con valoración también empieza hoy', async () => {
+    const { headers } = await login('adult');
+    const book = await createBook();
+
+    const response = await create(book.id, headers, { rating: 4 });
+
+    expect(response.statusCode).toBe(201);
+    expect(response.json<Reading>()).toMatchObject({ startedAt: '2026-03-02', rating: 4 });
+  });
+
+  it('solo con fin no rellena el inicio', async () => {
+    const { headers } = await login('adult');
+    const book = await createBook();
+
+    const response = await create(book.id, headers, { finishedAt: '2026-02-28' });
+
+    expect(response.statusCode).toBe(201);
+    expect(response.json<Reading>()).toMatchObject({ startedAt: null, finishedAt: '2026-02-28' });
   });
 });
 

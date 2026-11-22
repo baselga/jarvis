@@ -44,7 +44,8 @@ export async function createReading(
   db: DbOrTx,
   bookId: string,
   userId: string,
-  data: CreateReadingRequest,
+  // Ya con las fechas resueltas por la ruta (sin cuerpo no se llega aquí).
+  data: NonNullable<CreateReadingRequest>,
 ): Promise<CreateReadingResult> {
   try {
     const [reading] = await db

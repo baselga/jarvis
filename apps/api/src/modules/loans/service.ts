@@ -30,7 +30,7 @@ export type ListBookLoansResult = { status: 'ok'; loans: Loan[] } | { status: 'b
 export async function createLoan(
   db: DbOrTx,
   bookId: string,
-  { borrower, loanedAt }: CreateLoanRequest,
+  { borrower, loanedAt }: Required<CreateLoanRequest>,
 ): Promise<CreateLoanResult> {
   try {
     const [loan] = await db

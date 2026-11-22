@@ -11,15 +11,17 @@ export const LoanIdParamsSchema = z.object({ id: z.uuid() });
 
 export type LoanIdParams = z.infer<typeof LoanIdParamsSchema>;
 
-// Las fechas son obligatorias: la API no sabe qué día es en casa (zona horaria), el cliente sí.
+// Sin `loanedAt`, la API usa hoy en la zona de casa (`HOME_TZ`).
 export const CreateLoanRequestSchema = z.object({
   borrower: BorrowerSchema,
-  loanedAt: DateSchema,
+  loanedAt: DateSchema.optional(),
 });
 
 export type CreateLoanRequest = z.infer<typeof CreateLoanRequestSchema>;
 
-export const ReturnLoanRequestSchema = z.object({ returnedAt: DateSchema });
+// Sin `returnedAt` (o sin cuerpo), la API usa hoy en la zona de casa (`HOME_TZ`).
+// `.nullish()` y no `.optional()`: Fastify valida un cuerpo ausente como `null`.
+export const ReturnLoanRequestSchema = z.object({ returnedAt: DateSchema.optional() }).nullish();
 
 export type ReturnLoanRequest = z.infer<typeof ReturnLoanRequestSchema>;
 
