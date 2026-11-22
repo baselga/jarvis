@@ -11,7 +11,7 @@ Flujo: `/jarvis-spec` → `/jarvis-implement` → **`/jarvis-review`** → `/jar
 
 **Fase activa (F):** la de la línea `Fase activa` del `CLAUDE.md` raíz. Si dice que no hay ninguna, dímelo y para.
 **Tarea (N):** el argumento si lo paso; si no, la de la línea `Tarea activa` del `CLAUDE.md` raíz. Si no hay ninguna, dímelo y para. Si paso un N distinto de la tarea activa, avísame y pregúntame antes de seguir.
-**Rama:** si la rama actual tiene la forma `feature/F-N` y no coincide con F y N, avísame (no bloquea).
+**Rama:** si la rama actual tiene la forma `feature/F-N/…` y no coincide con F y N, avísame (no bloquea).
 **Archivo de la tarea:** `docs/fases/fase-F/tarea-N.md`. Su cabecera es una tabla `| Campo | Valor |` (`Estado`, `Tamaño`, `Fase`, `Plan`); para cambiar un campo, edita solo su fila.
 **Estados:** `especificada` → `en curso` → `implementada` → `revisada` → `terminada`.
 
