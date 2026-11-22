@@ -24,6 +24,7 @@ Reglas de usuarios:
 | Ver lecturas de la casa | ✅ | ✅ | ✅ |
 | Registrar, editar y borrar **sus** lecturas | ✅ | ✅ | ❌ |
 | Editar o borrar lecturas de otro | ❌ | ❌ | ❌ |
+| Cambiar su propio nombre | ✅ | ✅ | ❌ |
 | Cambiar su propia contraseña | ✅ | ✅ | ❌ |
 | Gestionar usuarios | ✅ | ❌ | ❌ |
 
