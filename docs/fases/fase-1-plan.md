@@ -49,7 +49,7 @@ Criterio: lo que es de la API y van a necesitar la web (fase 2) o el asistente (
 15. [x] **Ordenar imports:** regla de ESLint para todo el monorepo y autofix. Va primero para que el código nuevo ya la siga; no cambia comportamiento.
 16. [x] **503 si cae la BD:** `setErrorHandler` global que traduce los fallos de conexión a 503. Tests: BD inaccesible en una ruta protegida → 503.
 17. [x] **Emails en minúsculas en BD:** migración que normaliza los existentes y añade `check (email = lower(email))`. Tests: insertar un email con mayúsculas directamente en la BD falla.
-18. [ ] **Búsqueda sin tildes:** extensión `unaccent` en los cuatro listados con `q`. Tests: «garcia» encuentra «García» en libros y autores, y al revés.
+18. [x] **Búsqueda sin tildes:** extensión `unaccent` en los cuatro listados con `q`. Tests: «garcia» encuentra «García» en libros y autores, y al revés.
 19. [ ] **`PATCH /auth/me`:** editar el propio nombre. El spec decide si también el email y si el invitado (cuenta compartida) puede (propuesta: no). Tests: permisos por rol, no se puede cambiar el rol ni el estado por esta vía.
 20. [ ] **Corregir y borrar préstamos:** `PATCH`/`DELETE /loans/:id`. El spec fija qué roles pueden, si se puede «desdevolver» uno devuelto y cómo se evita que queden dos préstamos activos del mismo libro. Tests: permisos por rol, conflicto de préstamos activos → 409.
 21. [ ] **Fecha por defecto con `HOME_TZ`:** si no llega fecha, préstamos y lecturas usan «hoy» en la zona horaria de casa (`Europe/Madrid` en `.env.example`). Tests: sin fecha se rellena con la de `HOME_TZ`, no con la del servidor.
@@ -89,3 +89,4 @@ Criterio: lo que es de la API y van a necesitar la web (fase 2) o el asistente (
 - Imports (tarea 15): `simple-import-sort` (imports y `export … from`) en `error` para todo el monorepo; si `lint` falla por orden, `pnpm -r lint --fix`.
 - Errores (tarea 16): manejador global en `apps/api/src/error-handler.ts`. Las rutas no capturan errores de conexión ni declaran el 503: lo ponen el manejador y el `transform` de `openapi.ts`. Un 500 nunca enseña el mensaje interno. Para un código de BD nuevo que signifique «no disponible», se añade a `isDbUnavailable` (`db/errors.ts`).
 - Emails (tarea 17): `expectPgCode` en `test/helpers.ts` para probar reglas de la BD. Si una restricción nueva no la cumplirían filas existentes, el `UPDATE` va en el mismo SQL antes del `ALTER` (ver `apps/api/drizzle/0002_sour_azazel.sql`).
+- Búsqueda (tarea 18): `containsText(col, q)` en `db/search.ts` para cualquier `q` nuevo (sin mayúsculas ni tildes; la ñ también se ignora). La BD de desarrollo recibe `unaccent` al reiniciar `api`.

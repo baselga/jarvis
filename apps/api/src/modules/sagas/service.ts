@@ -1,10 +1,10 @@
 import type { Saga, SagaDetail, SagaListQuery } from '@jarvis/schemas';
-import { asc, count, eq, ilike, sql } from 'drizzle-orm';
+import { asc, count, eq, sql } from 'drizzle-orm';
 
 import type { DbOrTx } from '../../db/client.js';
 import { isForeignKeyViolation, isUniqueViolation } from '../../db/errors.js';
 import { books, sagas } from '../../db/schema/index.js';
-import { containsPattern } from '../../db/search.js';
+import { containsText } from '../../db/search.js';
 import { bookColumns } from '../books/service.js';
 
 const sagaColumns = { id: sagas.id, name: sagas.name };
@@ -19,7 +19,7 @@ export type UpdateSagaResult =
 export type DeleteSagaResult = { status: 'ok' } | { status: 'not_found' } | { status: 'has_books' };
 
 export async function listSagas(db: DbOrTx, { q, limit, offset }: SagaListQuery) {
-  const where = q === undefined ? undefined : ilike(sagas.name, containsPattern(q));
+  const where = q === undefined ? undefined : containsText(sagas.name, q);
   const [rows, [totalRow]] = await Promise.all([
     db
       .select(sagaColumns)

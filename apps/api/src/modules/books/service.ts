@@ -6,7 +6,7 @@ import type {
   CreateBookRequest,
   UpdateBookRequest,
 } from '@jarvis/schemas';
-import { and, count, eq, exists, ilike, inArray, isNull, notExists, or } from 'drizzle-orm';
+import { and, count, eq, exists, inArray, isNull, notExists, or } from 'drizzle-orm';
 
 import type { DbOrTx } from '../../db/client.js';
 import { constraintOf, isCheckViolation, isForeignKeyViolation } from '../../db/errors.js';
@@ -19,7 +19,7 @@ import {
   loans,
   sagas,
 } from '../../db/schema/index.js';
-import { containsPattern } from '../../db/search.js';
+import { containsText } from '../../db/search.js';
 
 export type InvalidReferenceEntity = 'author' | 'genre' | 'saga';
 
@@ -123,15 +123,14 @@ export async function getBook(db: DbOrTx, id: string): Promise<BookDetail | unde
 
 // `q` busca en el título y en el nombre de cualquiera de los autores.
 function matchesQuery(db: DbOrTx, q: string) {
-  const pattern = containsPattern(q);
   return or(
-    ilike(books.title, pattern),
+    containsText(books.title, q),
     exists(
       db
         .select({ id: authors.id })
         .from(bookAuthors)
         .innerJoin(authors, eq(authors.id, bookAuthors.authorId))
-        .where(and(eq(bookAuthors.bookId, books.id), ilike(authors.name, pattern))),
+        .where(and(eq(bookAuthors.bookId, books.id), containsText(authors.name, q))),
     ),
   );
 }

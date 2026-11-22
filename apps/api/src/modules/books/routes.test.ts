@@ -242,6 +242,25 @@ describe('GET /books', () => {
     expect(await titles({ q: 'tolkien' })).toEqual(['El Silmarillion']);
   });
 
+  it('q no distingue tildes en el título ni en el nombre del autor', async () => {
+    const garcia = await createAuthor({ name: 'García Márquez' });
+    await createBook({ title: 'Crónica de García' });
+    await createBook({ title: 'Cien años de soledad', authorIds: [garcia.id] });
+    await createBook({ title: 'Dune' });
+
+    const body = (await list({ q: 'garcia' })).json<BookListResponse>();
+
+    expect(body.books.map((b) => b.title)).toEqual(['Cien años de soledad', 'Crónica de García']);
+    expect(body.total).toBe(2);
+  });
+
+  it('q en minúsculas y sin tilde encuentra un título con tilde', async () => {
+    await createBook({ title: 'Crónica de una muerte anunciada' });
+    await createBook({ title: 'Dune' });
+
+    expect(await titles({ q: 'cronica' })).toEqual(['Crónica de una muerte anunciada']);
+  });
+
   it('un libro que coincide varias veces con q sale una sola vez', async () => {
     const first = await createAuthor({ name: 'Ana Fantasía' });
     const second = await createAuthor({ name: 'Luis Fantasía' });

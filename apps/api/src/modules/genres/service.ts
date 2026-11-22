@@ -1,10 +1,10 @@
 import type { Genre, GenreListQuery } from '@jarvis/schemas';
-import { count, eq, ilike } from 'drizzle-orm';
+import { count, eq } from 'drizzle-orm';
 
 import type { DbOrTx } from '../../db/client.js';
 import { isForeignKeyViolation, isUniqueViolation } from '../../db/errors.js';
 import { genres } from '../../db/schema/index.js';
-import { containsPattern } from '../../db/search.js';
+import { containsText } from '../../db/search.js';
 
 const genreColumns = { id: genres.id, name: genres.name };
 
@@ -19,7 +19,7 @@ export type DeleteGenreResult =
   { status: 'ok' } | { status: 'not_found' } | { status: 'has_books' };
 
 export async function listGenres(db: DbOrTx, { q, limit, offset }: GenreListQuery) {
-  const where = q === undefined ? undefined : ilike(genres.name, containsPattern(q));
+  const where = q === undefined ? undefined : containsText(genres.name, q);
   const [rows, [totalRow]] = await Promise.all([
     db
       .select(genreColumns)

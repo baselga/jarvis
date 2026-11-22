@@ -1,10 +1,10 @@
 import type { Author, AuthorListQuery } from '@jarvis/schemas';
-import { count, eq, ilike } from 'drizzle-orm';
+import { count, eq } from 'drizzle-orm';
 
 import type { DbOrTx } from '../../db/client.js';
 import { isForeignKeyViolation, isUniqueViolation } from '../../db/errors.js';
 import { authors } from '../../db/schema/index.js';
-import { containsPattern } from '../../db/search.js';
+import { containsText } from '../../db/search.js';
 
 const authorColumns = { id: authors.id, name: authors.name };
 
@@ -19,7 +19,7 @@ export type DeleteAuthorResult =
   { status: 'ok' } | { status: 'not_found' } | { status: 'has_books' };
 
 export async function listAuthors(db: DbOrTx, { q, limit, offset }: AuthorListQuery) {
-  const where = q === undefined ? undefined : ilike(authors.name, containsPattern(q));
+  const where = q === undefined ? undefined : containsText(authors.name, q);
   const [rows, [totalRow]] = await Promise.all([
     db
       .select(authorColumns)
