@@ -7,22 +7,33 @@ import {
   LoanIdParamsSchema,
   LoanSchema,
   ReturnLoanRequestSchema,
+  UpdateLoanRequestSchema,
 } from '@jarvis/schemas';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
+import { z } from 'zod';
 
 import { authErrorResponses, requireRole, sessionSecurity } from '../../auth/authenticate.js';
 import { badRequest, conflict, notFound } from '../../http-errors.js';
-import { createLoan, listActiveLoans, listBookLoans, returnLoan } from './service.js';
+import {
+  createLoan,
+  deleteLoan,
+  listActiveLoans,
+  listBookLoans,
+  returnLoan,
+  updateLoan,
+} from './service.js';
 
 const bookNotFound = notFound('Libro no encontrado');
 const loanNotFound = notFound('Préstamo no encontrado');
 const alreadyLoaned = conflict('El libro ya está prestado');
 const alreadyReturned = conflict('El préstamo ya está devuelto');
+const otherActiveLoan = conflict('El libro ya tiene otro préstamo activo');
 const returnedBeforeLoaned = badRequest('La devolución no puede ser anterior al préstamo');
 
-// Leer: cualquier usuario con sesión. Prestar y devolver: admin y adulto.
-// Devolver es una ruta de acción (`POST /loans/:id/return`) y no un `PATCH`: tiene reglas
-// propias (solo una vez) y la intención queda explícita.
+// Leer: cualquier usuario con sesión. Prestar, devolver, corregir y borrar: admin y adulto.
+// Devolver es una ruta de acción (`POST /loans/:id/return`): tiene reglas propias (solo una
+// vez) y la intención queda explícita. `PATCH /loans/:id` es la herramienta de corrección
+// (sin reglas de flujo; las invariantes las protege la BD en ambas vías).
 export const loanRoutes: FastifyPluginAsyncZod = async (app) => {
   app.addHook('onRequest', app.authenticate);
   const canWrite = requireRole('admin', 'adult');
@@ -89,6 +100,68 @@ export const loanRoutes: FastifyPluginAsyncZod = async (app) => {
           return reply.code(409).send(alreadyReturned);
         case 'returned_before_loaned':
           return reply.code(400).send(returnedBeforeLoaned);
+      }
+    },
+  );
+
+  app.patch(
+    '/loans/:id',
+    {
+      preHandler: canWrite,
+      schema: {
+        tags: ['loans'],
+        summary: 'Corrige un préstamo (prestatario y fechas; returnedAt: null lo reabre)',
+        security: sessionSecurity,
+        params: LoanIdParamsSchema,
+        body: UpdateLoanRequestSchema,
+        response: {
+          200: LoanSchema,
+          400: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          409: ErrorResponseSchema,
+          ...authErrorResponses,
+        },
+      },
+    },
+    async (request, reply) => {
+      const result = await updateLoan(app.db, request.params.id, request.body);
+      switch (result.status) {
+        case 'ok':
+          return result.loan;
+        case 'not_found':
+          return reply.code(404).send(loanNotFound);
+        case 'returned_before_loaned':
+          return reply.code(400).send(returnedBeforeLoaned);
+        case 'already_loaned':
+          return reply.code(409).send(otherActiveLoan);
+      }
+    },
+  );
+
+  app.delete(
+    '/loans/:id',
+    {
+      preHandler: canWrite,
+      schema: {
+        tags: ['loans'],
+        summary: 'Borra un préstamo registrado por error, esté activo o devuelto',
+        security: sessionSecurity,
+        params: LoanIdParamsSchema,
+        response: {
+          204: z.null().describe('Sin cuerpo'),
+          400: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          ...authErrorResponses,
+        },
+      },
+    },
+    async (request, reply) => {
+      const result = await deleteLoan(app.db, request.params.id);
+      switch (result.status) {
+        case 'ok':
+          return reply.code(204).send(null);
+        case 'not_found':
+          return reply.code(404).send(loanNotFound);
       }
     },
   );

@@ -56,6 +56,19 @@ function giveBack(loanId: string, headers: Record<string, string>, returnedAt = 
   });
 }
 
+function patchLoan(loanId: string, headers: Record<string, string>, payload: object) {
+  return app.inject({ method: 'PATCH', url: `/loans/${loanId}`, headers, payload });
+}
+
+function deleteLoan(loanId: string, headers: Record<string, string>) {
+  return app.inject({ method: 'DELETE', url: `/loans/${loanId}`, headers });
+}
+
+async function loanRow(id: string) {
+  const [row] = await testDb.select().from(loans).where(eq(loans.id, id));
+  return row;
+}
+
 describe('permisos de préstamos', () => {
   it('sin token las cuatro rutas responden 401', async () => {
     const book = await createBook();
@@ -128,6 +141,53 @@ describe('permisos de préstamos', () => {
 
     expect(response.statusCode).toBe(409);
     expect(response.json()).toMatchObject({ message: 'El libro ya está prestado' });
+  });
+});
+
+describe('permisos al corregir y borrar préstamos', () => {
+  it('sin token PATCH y DELETE /loans/:id responden 401', async () => {
+    const book = await createBook();
+    const loan = await createLoan({ bookId: book.id });
+
+    const patch = await patchLoan(loan.id, {}, { borrower: 'Marta' });
+    const del = await deleteLoan(loan.id, {});
+
+    expect(patch.statusCode).toBe(401);
+    expect(del.statusCode).toBe(401);
+  });
+
+  it('un invitado no puede corregir y el préstamo no cambia', async () => {
+    const headers = await headersFor('guest');
+    const book = await createBook();
+    const loan = await createLoan({ bookId: book.id, borrower: 'Vecina' });
+
+    const response = await patchLoan(loan.id, headers, { borrower: 'Marta' });
+
+    expect(response.statusCode).toBe(403);
+    expect((await loanRow(loan.id))!.borrower).toBe('Vecina');
+  });
+
+  it('un invitado no puede borrar y el préstamo sigue existiendo', async () => {
+    const headers = await headersFor('guest');
+    const book = await createBook();
+    const loan = await createLoan({ bookId: book.id });
+
+    const response = await deleteLoan(loan.id, headers);
+
+    expect(response.statusCode).toBe(403);
+    expect(await loanRow(loan.id)).toBeDefined();
+  });
+
+  it.each<Role>(['admin', 'adult'])('%s puede corregir y borrar', async (role) => {
+    const headers = await headersFor(role);
+    const book = await createBook();
+    const loan = await createLoan({ bookId: book.id });
+
+    const patch = await patchLoan(loan.id, headers, { borrower: 'Marta' });
+    const del = await deleteLoan(loan.id, headers);
+
+    expect(patch.statusCode).toBe(200);
+    expect(del.statusCode).toBe(204);
   });
 });
 
@@ -254,6 +314,211 @@ describe('POST /loans/:id/return', () => {
       headers,
       payload,
     });
+
+    expect(response.statusCode).toBe(400);
+  });
+});
+
+describe('PATCH /loans/:id', () => {
+  it('corrige borrower y loanedAt sin tocar returnedAt', async () => {
+    const headers = await headersFor('adult');
+    const book = await createBook();
+    const loan = await createLoan({
+      bookId: book.id,
+      borrower: 'Vecina',
+      loanedAt: '2026-03-01',
+      returnedAt: '2026-03-10',
+    });
+
+    const response = await patchLoan(loan.id, headers, {
+      borrower: '  Marta  ',
+      loanedAt: '2026-03-02',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json<Loan>()).toEqual({
+      id: loan.id,
+      bookId: book.id,
+      borrower: 'Marta',
+      loanedAt: '2026-03-02',
+      returnedAt: '2026-03-10',
+    });
+  });
+
+  it('con returnedAt en un préstamo activo queda devuelto', async () => {
+    const headers = await headersFor('adult');
+    const book = await createBook();
+    const loan = await createLoan({ bookId: book.id, loanedAt: '2026-03-01' });
+
+    const response = await patchLoan(loan.id, headers, { returnedAt: '2026-03-10' });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json<Loan>()).toMatchObject({ returnedAt: '2026-03-10' });
+    const detail = await app.inject({ method: 'GET', url: `/books/${book.id}`, headers });
+    expect(detail.json<BookDetail>().activeLoan).toBeNull();
+  });
+
+  it('con returnedAt: null un devuelto vuelve a estar activo', async () => {
+    const headers = await headersFor('adult');
+    const book = await createBook();
+    const loan = await createLoan({
+      bookId: book.id,
+      loanedAt: '2026-03-01',
+      returnedAt: '2026-03-10',
+    });
+
+    const response = await patchLoan(loan.id, headers, { returnedAt: null });
+
+    expect(response.statusCode).toBe(200);
+    const updated = response.json<Loan>();
+    expect(updated).toMatchObject({ id: loan.id, returnedAt: null });
+    const detail = await app.inject({ method: 'GET', url: `/books/${book.id}`, headers });
+    expect(detail.json<BookDetail>().activeLoan).toEqual(updated);
+  });
+
+  it('desdevolver cuando el libro ya tiene otro préstamo activo da 409 y sigue devuelto', async () => {
+    const headers = await headersFor('adult');
+    const book = await createBook();
+    const returned = await createLoan({
+      bookId: book.id,
+      loanedAt: '2026-01-01',
+      returnedAt: '2026-01-10',
+    });
+    await createLoan({ bookId: book.id, loanedAt: '2026-03-01' });
+
+    const response = await patchLoan(returned.id, headers, { returnedAt: null });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toMatchObject({ message: 'El libro ya tiene otro préstamo activo' });
+    expect((await loanRow(returned.id))!.returnedAt).toBe('2026-01-10');
+  });
+
+  it.each([
+    ['returnedAt anterior al loanedAt guardado', { returnedAt: '2026-02-28' }],
+    ['loanedAt posterior al returnedAt guardado', { loanedAt: '2026-03-11' }],
+  ])('%s da 400 (regla de la BD)', async (_case, payload) => {
+    const headers = await headersFor('adult');
+    const book = await createBook();
+    const loan = await createLoan({
+      bookId: book.id,
+      loanedAt: '2026-03-01',
+      returnedAt: '2026-03-10',
+    });
+
+    const response = await patchLoan(loan.id, headers, payload);
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toMatchObject({
+      message: 'La devolución no puede ser anterior al préstamo',
+    });
+    expect(await loanRow(loan.id)).toMatchObject({
+      loanedAt: '2026-03-01',
+      returnedAt: '2026-03-10',
+    });
+  });
+
+  it('con la devolución antes del préstamo en el cuerpo da 400 de validación', async () => {
+    const headers = await headersFor('adult');
+    const book = await createBook();
+    const loan = await createLoan({ bookId: book.id });
+
+    const response = await patchLoan(loan.id, headers, {
+      loanedAt: '2026-03-10',
+      returnedAt: '2026-03-01',
+    });
+
+    // Lo rechaza el `refine` del esquema (Zod), no la regla de la BD: la BD daría el
+    // mismo 400, pero con el mensaje de la ruta y sin `FST_ERR_VALIDATION`.
+    expect(response.statusCode).toBe(400);
+    const body = response.json<{ code: string; message: string }>();
+    expect(body.code).toBe('FST_ERR_VALIDATION');
+    expect(body.message).toMatch(/^body\/returnedAt /);
+    expect(body.message).toContain('La devolución no puede ser anterior al préstamo');
+  });
+
+  it.each([
+    ['cuerpo vacío', {}],
+    ['borrower vacío', { borrower: '   ' }],
+    ['loanedAt inválido', { loanedAt: '2026-02-30' }],
+  ])('%s da 400', async (_case, payload) => {
+    const headers = await headersFor('adult');
+    const book = await createBook();
+    const loan = await createLoan({ bookId: book.id });
+
+    const response = await patchLoan(loan.id, headers, payload);
+
+    expect(response.statusCode).toBe(400);
+  });
+
+  it('con bookId en el cuerpo da 400 y el préstamo no cambia', async () => {
+    const headers = await headersFor('adult');
+    const book = await createBook();
+    const other = await createBook();
+    const loan = await createLoan({ bookId: book.id, borrower: 'Vecina' });
+
+    const response = await patchLoan(loan.id, headers, { bookId: other.id, borrower: 'Marta' });
+
+    expect(response.statusCode).toBe(400);
+    expect(await loanRow(loan.id)).toMatchObject({ bookId: book.id, borrower: 'Vecina' });
+  });
+
+  it('con un préstamo inexistente da 404', async () => {
+    const headers = await headersFor('adult');
+
+    const response = await patchLoan(UNKNOWN_ID, headers, { borrower: 'Marta' });
+
+    expect(response.statusCode).toBe(404);
+    expect(response.json()).toMatchObject({ message: 'Préstamo no encontrado' });
+  });
+});
+
+describe('DELETE /loans/:id', () => {
+  it('borra un préstamo activo: el libro queda en casa, sale del historial y se puede prestar', async () => {
+    const headers = await headersFor('adult');
+    const book = await createBook();
+    const loan = await createLoan({ bookId: book.id });
+
+    const response = await deleteLoan(loan.id, headers);
+
+    expect(response.statusCode).toBe(204);
+    expect(response.body).toBe('');
+    const detail = await app.inject({ method: 'GET', url: `/books/${book.id}`, headers });
+    expect(detail.json<BookDetail>().activeLoan).toBeNull();
+    const history = await app.inject({ method: 'GET', url: `/books/${book.id}/loans`, headers });
+    expect(history.json<BookLoansResponse>().loans).toEqual([]);
+    expect((await lend(book.id, headers)).statusCode).toBe(201);
+  });
+
+  it('borra un préstamo devuelto: sale del historial del libro', async () => {
+    const headers = await headersFor('adult');
+    const book = await createBook();
+    const loan = await createLoan({
+      bookId: book.id,
+      loanedAt: '2026-03-01',
+      returnedAt: '2026-03-10',
+    });
+
+    const response = await deleteLoan(loan.id, headers);
+
+    expect(response.statusCode).toBe(204);
+    expect(await loanRow(loan.id)).toBeUndefined();
+    const history = await app.inject({ method: 'GET', url: `/books/${book.id}/loans`, headers });
+    expect(history.json<BookLoansResponse>().loans).toEqual([]);
+  });
+
+  it('con un préstamo inexistente da 404', async () => {
+    const headers = await headersFor('adult');
+
+    const response = await deleteLoan(UNKNOWN_ID, headers);
+
+    expect(response.statusCode).toBe(404);
+    expect(response.json()).toMatchObject({ message: 'Préstamo no encontrado' });
+  });
+
+  it('con un id que no es uuid da 400', async () => {
+    const headers = await headersFor('adult');
+
+    const response = await deleteLoan('no-es-uuid', headers);
 
     expect(response.statusCode).toBe(400);
   });
