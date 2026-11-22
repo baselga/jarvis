@@ -1,5 +1,6 @@
 import type { Role } from '@jarvis/schemas';
 import { sql } from 'drizzle-orm';
+import { expect } from 'vitest';
 
 import { buildApp, type BuildAppOptions } from '../app.js';
 import { hashPassword } from '../auth/password.js';
@@ -34,6 +35,17 @@ export async function resetDb() {
   if (rows.length === 0) return;
   const tables = rows.map((r) => `"${r.tablename}"`).join(', ');
   await testDb.execute(sql.raw(`truncate ${tables} restart identity cascade`));
+}
+
+// Espera que `promise` falle con el código de Postgres `code` (p. ej. `23514`).
+// Drizzle envuelve el error de `postgres`: el código está en `cause`.
+export async function expectPgCode(promise: PromiseLike<unknown>, code: string) {
+  const error = await Promise.resolve(promise).then(
+    () => undefined,
+    (e: unknown) => e,
+  );
+  expect(error).toBeInstanceOf(Error);
+  expect((error as Error & { cause?: { code?: string } }).cause?.code).toBe(code);
 }
 
 // App con la BD de test. Quien la usa hace `app.close()` (no cierra la BD).

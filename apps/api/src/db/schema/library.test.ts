@@ -2,7 +2,7 @@ import { IsbnSchema, LanguageSchema } from '@jarvis/schemas';
 import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
-import { createUser, testDb } from '../../test/helpers.js';
+import { createUser, expectPgCode, testDb } from '../../test/helpers.js';
 import { isUniqueViolation } from '../errors.js';
 import {
   authors,
@@ -19,16 +19,6 @@ import {
 // da 23001, no el 23503 (`foreign_key_violation`) de `NO ACTION` ni de un id inexistente.
 const CHECK_VIOLATION = '23514';
 const RESTRICT_VIOLATION = '23001';
-
-// Drizzle envuelve el error de `postgres`: el código está en `cause`.
-async function expectPgCode(promise: PromiseLike<unknown>, code: string) {
-  const error = await Promise.resolve(promise).then(
-    () => undefined,
-    (e: unknown) => e,
-  );
-  expect(error).toBeInstanceOf(Error);
-  expect((error as Error & { cause?: { code?: string } }).cause?.code).toBe(code);
-}
 
 async function createBook(values: Partial<typeof books.$inferInsert> = {}) {
   const [book] = await testDb

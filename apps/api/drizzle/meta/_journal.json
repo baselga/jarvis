@@ -15,6 +15,13 @@
       "when": 1794763390432,
       "tag": "0001_lame_korath",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795351254482,
+      "tag": "0002_sour_azazel",
+      "breakpoints": true
     }
   ]
 }
