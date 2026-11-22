@@ -19,6 +19,9 @@ src/db/run-migrations.ts  runMigrations(url): la usan `migrate.ts` y el setup de
 src/db/migrate.ts  Aplica las migraciones pendientes (`pnpm db:migrate`; `dev` lo ejecuta al arrancar).
 src/db/seed-admin.ts  seedAdmin(db, datos): crea el primer admin si no existe (idempotente).
 src/db/seed.ts     Script `pnpm db:seed`: lee `ADMIN_*` del entorno y llama a seedAdmin.
+src/db/sample.ts   Script `pnpm db:sample [--reset]` (solo desarrollo): inserta `sample-data.ts` en una transacción.
+                   Sin `--reset` se niega si ya hay datos; con él vacía la biblioteca y los usuarios de ejemplo (no el admin).
+src/db/sample-data.ts  Datos de ejemplo (libros, autores, préstamos, lecturas, usuarios): solo datos, fechas como «hace N días».
 src/auth/          password.ts (argon2id), session.ts (crear/validar/borrar sesiones opacas),
                    request-token.ts (token de Bearer o cookie, opciones de la cookie),
                    authenticate.ts (plugin `auth`: `app.authenticate`, `requireRole`).
