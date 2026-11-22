@@ -7,10 +7,11 @@ API REST del hogar (Fastify + Drizzle + PostgreSQL). No sabe nada de IA.
 ```
 src/server.ts      Arranque: lee config, crea la BD, escucha y cierra limpio (SIGTERM).
 src/app.ts         buildApp(): crea la instancia Fastify y registra rutas. Sin puerto.
-src/openapi.ts     registerOpenApi(): @fastify/swagger + Swagger UI en /docs (antes que las rutas).
+src/openapi.ts     registerOpenApi(): @fastify/swagger + Swagger UI en /docs (antes que las rutas). Su `transform` añade el 503 a todas las rutas.
+src/error-handler.ts errorHandler: manejador global (`setErrorHandler` en `buildApp`). BD caída → 503; 4xx → el de Fastify; resto → 500 genérico.
 src/config.ts      Variables de entorno validadas con Zod (fail fast).
 src/db/client.ts   createDb(): pool `postgres` + Drizzle (con el esquema). Tipos `Db` y `DbOrTx`.
-src/db/errors.ts   isUniqueViolation / isForeignKeyViolation / isCheckViolation: detectan los códigos de Postgres (`23505`; `23001` y `23503`; `23514`). `constraintOf(error)` da el nombre de la restricción que saltó.
+src/db/errors.ts   isUniqueViolation / isForeignKeyViolation / isCheckViolation: detectan los códigos de Postgres (`23505`; `23001` y `23503`; `23514`). `constraintOf(error)` da el nombre de la restricción que saltó. `isDbUnavailable`: fallo de conexión (red, cliente `postgres`, SQLSTATE `08xxx`/`57P0x`/`53300`).
 src/db/search.ts   containsPattern(q): patrón `ILIKE` «contiene q» con `%`, `_` y `\` escapados.
 src/db/schema/     Tablas Drizzle, un archivo por bloque (`users.ts`, `library.ts`); `index.ts` reexporta.
 src/db/run-migrations.ts  runMigrations(url): la usan `migrate.ts` y el setup de tests.
@@ -24,7 +25,7 @@ drizzle/           Migraciones SQL generadas por drizzle-kit, versionadas en git
 src/modules/<x>/   Una carpeta por entidad o grupo de rutas: `routes.ts` (plugin Fastify) y `routes.test.ts`
                    (`health`, `auth`, `users`, `authors`, `genres`, `sagas`, `books`, `loans`, `readings`). Con lógica de datos propia lleva también `service.ts`
                    (`authors` es el patrón de referencia).
-src/http-errors.ts notFound(msg), badRequest(msg), forbidden(msg) y conflict(msg): errores HTTP compartidos por los módulos.
+src/http-errors.ts notFound(msg), badRequest(msg), forbidden(msg), conflict(msg) y serviceUnavailable(msg): errores HTTP compartidos por los módulos.
 src/test/          Infra de tests: BD `_test` (env.ts, global-setup.ts, setup.ts) y helpers.
 ```
 
@@ -56,7 +57,7 @@ src/test/          Infra de tests: BD `_test` (env.ts, global-setup.ts, setup.ts
 - **Relaciones en lote (evitar N+1):** para devolver una lista con sus relaciones, se lee la página y después cada relación de una vez para todos los ids (`inArray`), repartida con un `Map`; nunca una consulta por elemento. Ver `withRelations` en `modules/books/service.ts` (también lo usan `getBook` y `listActiveLoans`). `bookColumns` se exporta desde ahí y lo reutilizan `modules/sagas/service.ts` y `modules/loans/service.ts`.
 - **Acciones con reglas (`POST /loans/:id/return`):** ruta de acción en vez de un `PATCH` genérico, y `UPDATE … WHERE id = $1 AND <estado> RETURNING` (p. ej. `returned_at IS NULL`): atómico, sin leer antes. Si no cambia ninguna fila, una segunda consulta distingue 404 de 409. Ver `returnLoan` en `modules/loans/service.ts`.
 - **Autorización por fila (`PATCH`/`DELETE /readings/:id`):** además del rol, «¿esta fila es tuya?» va en el propio `WHERE` (`UPDATE/DELETE … WHERE id = $1 AND user_id = <yo> RETURNING`): una fila ajena nunca se toca. Si no cambia ninguna, una segunda consulta distingue 404 (no existe) de 403 (es de otro). El id del usuario sale de `request.user`, nunca del cuerpo. Ver `modules/readings/service.ts`.
-- **Códigos HTTP con intención:** 503 si falla una dependencia (BD), no 500.
+- **Códigos HTTP con intención:** 503 si falla una dependencia (BD), no 500. El 503 por BD caída y el 500 genérico («Error interno», sin el SQL de Drizzle; el detalle va al log) los pone el manejador global: las rutas no capturan errores de conexión ni declaran el 503 (lo documenta `openapi.ts`). Solo `/health` tiene el suyo.
 
 ## Tests
 

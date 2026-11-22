@@ -27,6 +27,17 @@ describe('OpenAPI', () => {
     await app.close();
   });
 
+  it('documenta el 503 en todas las rutas sin pisar el de /health', async () => {
+    const app = buildApp({ db });
+
+    const doc = (await app.inject({ method: 'GET', url: '/docs/json' })).json<OpenApiDoc>();
+
+    expect(doc.paths['/authors']?.get?.responses).toHaveProperty('503');
+    // El de `/health` es `HealthResponseSchema` (con `db`), no el genérico de error.
+    expect(JSON.stringify(doc.paths['/health']?.get?.responses['503'])).toContain('"db"');
+    await app.close();
+  });
+
   it('GET /docs sirve Swagger UI en HTML', async () => {
     const app = buildApp({ db });
 

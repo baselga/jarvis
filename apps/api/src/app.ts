@@ -4,6 +4,7 @@ import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod
 
 import { authPlugin } from './auth/authenticate.js';
 import type { Db } from './db/client.js';
+import { errorHandler } from './error-handler.js';
 import { authRoutes } from './modules/auth/routes.js';
 import { authorRoutes } from './modules/authors/routes.js';
 import { bookRoutes } from './modules/books/routes.js';
@@ -37,6 +38,8 @@ export function buildApp({ logger = false, db, cookieSecure = false }: BuildAppO
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
   app.decorate('db', db);
+  // Antes que plugins y rutas: lo heredan todos por encapsulación.
+  app.setErrorHandler(errorHandler);
   // Muchos clientes envían `Content-Type: application/json` siempre, también en
   // un POST sin cuerpo (logout); Fastify lo rechaza con 400. Aquí el cuerpo vacío
   // es `undefined` y el resto lo parsea el de Fastify (con su protección de `__proto__`).
