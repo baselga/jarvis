@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { EmailSchema, PasswordSchema, RoleSchema } from './user.js';
+import { EmailSchema, PasswordSchema, RoleSchema, UserNameSchema } from './user.js';
 
 // La contraseña no usa PasswordSchema: el mínimo de 8 es para crearlas; aquí
 // una corta debe dar 401 (credenciales incorrectas), no 400.
@@ -42,3 +42,11 @@ export const ChangePasswordRequestSchema = z.object({
 });
 
 export type ChangePasswordRequest = z.infer<typeof ChangePasswordRequestSchema>;
+
+// Solo el nombre: el email lo cambia el admin. Estricto: `role`, `active`,
+// `email`… dan 400 en vez de ignorarse en silencio.
+export const UpdateMeRequestSchema = z.strictObject({
+  name: UserNameSchema,
+});
+
+export type UpdateMeRequest = z.infer<typeof UpdateMeRequestSchema>;

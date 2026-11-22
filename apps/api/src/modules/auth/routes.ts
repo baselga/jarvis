@@ -4,6 +4,7 @@ import {
   LoginRequestSchema,
   LoginResponseSchema,
   MeResponseSchema,
+  UpdateMeRequestSchema,
 } from '@jarvis/schemas';
 import { eq } from 'drizzle-orm';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
@@ -103,6 +104,31 @@ export const authRoutes: FastifyPluginAsyncZod<AuthRoutesOptions> = async (
       },
     },
     async (request) => ({ user: request.user }),
+  );
+
+  app.patch(
+    '/auth/me',
+    {
+      onRequest: app.authenticate,
+      preHandler: requireRole('admin', 'adult'),
+      schema: {
+        tags: ['auth'],
+        summary: 'Cambia el nombre del usuario de la sesión',
+        security: sessionSecurity,
+        body: UpdateMeRequestSchema,
+        response: { 200: MeResponseSchema, 400: ErrorResponseSchema, ...authErrorResponses },
+      },
+    },
+    async (request) => {
+      // Sin id en la URL: siempre el usuario de la sesión, no hay otro al que apuntar.
+      const [user] = await app.db
+        .update(users)
+        .set({ name: request.body.name })
+        .where(eq(users.id, request.user.id))
+        .returning({ id: users.id, name: users.name, email: users.email, role: users.role });
+      // Los usuarios no se borran y `authenticate` acaba de leer la fila: existe.
+      return { user: user! };
+    },
   );
 
   app.put(

@@ -308,3 +308,108 @@ describe('PUT /auth/password', () => {
     expect(res.statusCode).toBe(400);
   });
 });
+
+describe('PATCH /auth/me', () => {
+  function updateMe(token: string | undefined, payload: object) {
+    return app.inject({
+      method: 'PATCH',
+      url: '/auth/me',
+      headers: token === undefined ? {} : bearer(token),
+      payload,
+    });
+  }
+
+  async function storedUser(id: string) {
+    const [stored] = await testDb.select().from(users).where(eq(users.id, id));
+    return stored!;
+  }
+
+  it('sin token responde 401', async () => {
+    expect((await updateMe(undefined, { name: 'Ana' })).statusCode).toBe(401);
+  });
+
+  it('un invitado recibe 403 y su nombre no cambia', async () => {
+    const guest = await createUser({ name: 'Invitado', role: 'guest' });
+    const { token } = await createSession(guest.id);
+
+    expect((await updateMe(token, { name: 'Otro' })).statusCode).toBe(403);
+    expect((await storedUser(guest.id)).name).toBe('Invitado');
+  });
+
+  it('un adulto cambia su nombre y GET /auth/me devuelve el nuevo', async () => {
+    const user = await createUser({ name: 'Ana', email: 'ana@test.local', role: 'adult' });
+    const { token } = await createSession(user.id);
+
+    const res = await updateMe(token, { name: 'Ana María' });
+
+    expect(res.statusCode).toBe(200);
+    expect(MeResponseSchema.parse(res.json())).toEqual({
+      user: { id: user.id, name: 'Ana María', email: 'ana@test.local', role: 'adult' },
+    });
+    expect(MeResponseSchema.parse((await me(bearer(token))).json()).user.name).toBe('Ana María');
+  });
+
+  it('el admin cambia su nombre', async () => {
+    const admin = await createUser({ name: 'Admin', role: 'admin' });
+    const { token } = await createSession(admin.id);
+
+    const res = await updateMe(token, { name: 'Jefa' });
+
+    expect(res.statusCode).toBe(200);
+    expect(MeResponseSchema.parse(res.json()).user).toMatchObject({ name: 'Jefa', role: 'admin' });
+  });
+
+  it.each([{ role: 'admin' }, { active: false }])(
+    'con %o en el cuerpo responde 400 y no cambia nada',
+    async (extra) => {
+      const user = await createUser({ name: 'Ana', role: 'adult' });
+      const { token } = await createSession(user.id);
+
+      const res = await updateMe(token, { name: 'Otra', ...extra });
+
+      expect(res.statusCode).toBe(400);
+      expect(ErrorResponseSchema.safeParse(res.json()).success).toBe(true);
+      const stored = await storedUser(user.id);
+      expect(stored).toMatchObject({ name: 'Ana', role: 'adult', active: true });
+    },
+  );
+
+  it('con email en el cuerpo responde 400 y el email no cambia', async () => {
+    const user = await createUser({ email: 'ana@test.local' });
+    const { token } = await createSession(user.id);
+
+    const res = await updateMe(token, { name: 'Ana', email: 'otra@test.local' });
+
+    expect(res.statusCode).toBe(400);
+    expect((await storedUser(user.id)).email).toBe('ana@test.local');
+  });
+
+  it.each([{}, { name: '' }, { name: '   ' }, { name: 'a'.repeat(101) }])(
+    'con %o responde 400',
+    async (payload) => {
+      const user = await createUser();
+      const { token } = await createSession(user.id);
+
+      expect((await updateMe(token, payload)).statusCode).toBe(400);
+    },
+  );
+
+  it('recorta los espacios del nombre', async () => {
+    const user = await createUser();
+    const { token } = await createSession(user.id);
+
+    const res = await updateMe(token, { name: '  Ana  ' });
+
+    expect(MeResponseSchema.parse(res.json()).user.name).toBe('Ana');
+    expect((await storedUser(user.id)).name).toBe('Ana');
+  });
+
+  it('solo cambia el usuario de la sesión', async () => {
+    const user = await createUser({ name: 'Ana' });
+    const other = await createUser({ name: 'Luis' });
+    const { token } = await createSession(user.id);
+
+    expect((await updateMe(token, { name: 'Ana María' })).statusCode).toBe(200);
+    expect((await storedUser(other.id)).name).toBe('Luis');
+  });
+});
