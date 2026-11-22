@@ -10,6 +10,7 @@
     "db:generate": "NODE_OPTIONS=--conditions=development drizzle-kit generate",
     "db:migrate": "tsx --conditions=development src/db/migrate.ts",
     "db:seed": "tsx --conditions=development src/db/seed.ts",
+    "db:sample": "tsx --conditions=development src/db/sample.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run"
