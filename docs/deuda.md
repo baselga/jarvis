@@ -5,8 +5,8 @@ Lo que se deja para más adelante a sabiendas. Cada entrada: qué pasa, por qué
 ## Deuda
 
 - **La imagen `prod` no aplica migraciones ni ejecuta el seed.** Hoy solo lo hace `dev` al arrancar. Resolver al desplegar, en la fase 4. _(tareas 1 y 4)_
+- **Arranque sin BD:** si Postgres no está listo cuando arranca la API (`server.ts`, migraciones), no se reintenta. Hay que verlo al desplegar, en la fase 4, junto con la entrada de la imagen `prod`. _(tarea 16)_
 - **Sin límite de intentos de login.** Fuerza bruta posible contra `/auth/login`; `@fastify/rate-limit`. Fase 4, al exponer la API fuera de casa. _(tarea 5)_
-- **Si la BD cae, las rutas protegidas dan 500, no 503.** Falta un `setErrorHandler` global que traduzca los fallos de conexión. _(tarea 6)_
 - **CRUD repetido en `authors`, `genres` y `sagas`** (~250 líneas casi iguales). Extraer uno genérico cuando llegue una cuarta entidad «solo nombre». _(tarea 10)_
 - **La búsqueda distingue tildes** («garcia» no encuentra «García»). Necesita la extensión `unaccent` y afecta a los cuatro listados. _(tarea 12)_
 

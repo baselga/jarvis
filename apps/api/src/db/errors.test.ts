@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   constraintOf,
   isCheckViolation,
+  isDbUnavailable,
   isForeignKeyViolation,
   isUniqueViolation,
 } from './errors.js';
@@ -49,6 +50,23 @@ describe('isCheckViolation', () => {
   it('otro código o un valor que no es error → false', () => {
     expect(isCheckViolation(wrapped('23505'))).toBe(false);
     expect(isCheckViolation(undefined)).toBe(false);
+  });
+});
+
+describe('isDbUnavailable', () => {
+  const codes = ['ECONNREFUSED', 'CONNECTION_ENDED', '08006', '57P01'];
+
+  it('detecta red, cliente y SQLSTATE de conexión, directos y en cause', () => {
+    for (const code of codes) {
+      expect(isDbUnavailable({ code })).toBe(true);
+      expect(isDbUnavailable(wrapped(code))).toBe(true);
+    }
+  });
+
+  it('un error de consulta, un Error sin código o undefined → false', () => {
+    expect(isDbUnavailable(wrapped('23505'))).toBe(false);
+    expect(isDbUnavailable(new Error('sin código'))).toBe(false);
+    expect(isDbUnavailable(undefined)).toBe(false);
   });
 });
 

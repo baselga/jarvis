@@ -47,7 +47,7 @@ Tres bloques, cada uno revisable por separado: **1a** auth y usuarios, **1b** bi
 Criterio: lo que es de la API y van a necesitar la web (fase 2) o el asistente (fase 3) se hace ahora, para que la fase 2 sea solo front. El límite de intentos de login y la imagen `prod` (migraciones y seed al arrancar) quedan para la fase 4, al desplegar.
 
 15. [x] **Ordenar imports:** regla de ESLint para todo el monorepo y autofix. Va primero para que el código nuevo ya la siga; no cambia comportamiento.
-16. [ ] **503 si cae la BD:** `setErrorHandler` global que traduce los fallos de conexión a 503. Tests: BD inaccesible en una ruta protegida → 503.
+16. [x] **503 si cae la BD:** `setErrorHandler` global que traduce los fallos de conexión a 503. Tests: BD inaccesible en una ruta protegida → 503.
 17. [ ] **Emails en minúsculas en BD:** migración que normaliza los existentes y añade `check (email = lower(email))`. Tests: insertar un email con mayúsculas directamente en la BD falla.
 18. [ ] **Búsqueda sin tildes:** extensión `unaccent` en los cuatro listados con `q`. Tests: «garcia» encuentra «García» en libros y autores, y al revés.
 19. [ ] **`PATCH /auth/me`:** editar el propio nombre. El spec decide si también el email y si el invitado (cuenta compartida) puede (propuesta: no). Tests: permisos por rol, no se puede cambiar el rol ni el estado por esta vía.
@@ -87,3 +87,4 @@ Criterio: lo que es de la API y van a necesitar la web (fase 2) o el asistente (
 - Préstamos (tarea 13): `modules/loans/` con `POST /books/:id/loans`, `POST /loans/:id/return`, `GET /books/:id/loans` y `GET /loans/active` (`ActiveLoan` incluye el `BookDetail`). DTOs en `packages/schemas/src/loan-detail.ts`. Las fechas son obligatorias: la web (fase 2) envía la fecha de hoy del usuario.
 - Lecturas (tarea 14): `modules/readings/` con `GET /readings?bookId=&userId=` (cada elemento lleva `user: { id, name }` y `book: { id, title }`; «mis lecturas» = `?userId=<id de /auth/me>`), `POST /books/:id/readings` y `PATCH`/`DELETE /readings/:id` (solo el dueño, ni el admin). El invitado ve, pero no escribe. En `PATCH`, `null` vacía un campo y si no se envía no se toca. `createReading` en `test/helpers.ts` y `readingDateMessages` en `@jarvis/schemas`. La web (fase 2) usa estos contratos.
 - Imports (tarea 15): `simple-import-sort` (imports y `export … from`) en `error` para todo el monorepo; si `lint` falla por orden, `pnpm -r lint --fix`.
+- Errores (tarea 16): manejador global en `apps/api/src/error-handler.ts`. Las rutas no capturan errores de conexión ni declaran el 503: lo ponen el manejador y el `transform` de `openapi.ts`. Un 500 nunca enseña el mensaje interno. Para un código de BD nuevo que signifique «no disponible», se añade a `isDbUnavailable` (`db/errors.ts`).

@@ -10,3 +10,6 @@ export const conflict = (message: string) =>
 
 export const forbidden = (message: string) =>
   ({ statusCode: 403, error: 'Forbidden', message }) as const;
+
+export const serviceUnavailable = (message: string) =>
+  ({ statusCode: 503, error: 'Service Unavailable', message }) as const;
