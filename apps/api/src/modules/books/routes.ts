@@ -9,15 +9,16 @@ import {
 } from '@jarvis/schemas';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
+
 import { authErrorResponses, requireRole, sessionSecurity } from '../../auth/authenticate.js';
 import { badRequest, notFound } from '../../http-errors.js';
 import {
   createBook,
   deleteBook,
   getBook,
+  type InvalidReferenceEntity,
   listBooks,
   updateBook,
-  type InvalidReferenceEntity,
 } from './service.js';
 
 const bookNotFound = notFound('Libro no encontrado');

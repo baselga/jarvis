@@ -2,6 +2,7 @@ import { ErrorResponseSchema, LoginResponseSchema, MeResponseSchema } from '@jar
 import { eq } from 'drizzle-orm';
 import type { FastifyInstance, LightMyRequestResponse } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
 import { SESSION_COOKIE } from '../../auth/request-token.js';
 import { users } from '../../db/schema/index.js';
 import { buildTestApp, createSession, createUser, testDb } from '../../test/helpers.js';

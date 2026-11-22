@@ -1,8 +1,9 @@
 import type { Role } from '@jarvis/schemas';
 import { sql } from 'drizzle-orm';
-import { type BuildAppOptions, buildApp } from '../app.js';
+
+import { buildApp, type BuildAppOptions } from '../app.js';
 import { hashPassword } from '../auth/password.js';
-import { SESSION_TTL_MS, generateSessionToken, hashSessionToken } from '../auth/session.js';
+import { generateSessionToken, hashSessionToken, SESSION_TTL_MS } from '../auth/session.js';
 import { createDb } from '../db/client.js';
 import {
   authors,

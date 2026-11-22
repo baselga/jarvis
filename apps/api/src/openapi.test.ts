@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { buildApp } from './app.js';
 import type { Db } from './db/client.js';
 

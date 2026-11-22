@@ -9,6 +9,7 @@ import {
 } from '@jarvis/schemas';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
+
 import { authErrorResponses, requireRole, sessionSecurity } from '../../auth/authenticate.js';
 import { conflict, notFound } from '../../http-errors.js';
 import { createAuthor, deleteAuthor, getAuthor, listAuthors, updateAuthor } from './service.js';

@@ -2,6 +2,7 @@ import type { Reading, ReadingListResponse, Role } from '@jarvis/schemas';
 import { eq } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
 import { books, readings } from '../../db/schema/index.js';
 import {
   buildTestApp,

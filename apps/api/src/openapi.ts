@@ -2,6 +2,7 @@ import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import type { FastifyInstance } from 'fastify';
 import { jsonSchemaTransform } from 'fastify-type-provider-zod';
+
 import { SESSION_COOKIE } from './auth/request-token.js';
 
 // Documentación OpenAPI generada desde los esquemas Zod de las rutas.

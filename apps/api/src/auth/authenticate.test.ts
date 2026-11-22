@@ -1,6 +1,7 @@
 import { ErrorResponseSchema, type Role } from '@jarvis/schemas';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
 import { buildTestApp, createSession, createUser } from '../test/helpers.js';
 import { requireRole } from './authenticate.js';
 import { SESSION_COOKIE } from './request-token.js';

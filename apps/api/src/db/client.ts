@@ -1,6 +1,7 @@
 import type { PgDatabase } from 'drizzle-orm/pg-core';
-import { type PostgresJsQueryResultHKT, drizzle } from 'drizzle-orm/postgres-js';
+import { drizzle, type PostgresJsQueryResultHKT } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
+
 import * as schema from './schema/index.js';
 
 // `postgres` gestiona el pool de conexiones; Drizzle construye las consultas

@@ -9,6 +9,7 @@ import {
   ReturnLoanRequestSchema,
 } from '@jarvis/schemas';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
+
 import { authErrorResponses, requireRole, sessionSecurity } from '../../auth/authenticate.js';
 import { badRequest, conflict, notFound } from '../../http-errors.js';
 import { createLoan, listActiveLoans, listBookLoans, returnLoan } from './service.js';

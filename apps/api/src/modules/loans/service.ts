@@ -1,5 +1,6 @@
 import type { ActiveLoan, CreateLoanRequest, Loan } from '@jarvis/schemas';
 import { and, asc, desc, eq, isNull } from 'drizzle-orm';
+
 import type { DbOrTx } from '../../db/client.js';
 import { isCheckViolation, isForeignKeyViolation, isUniqueViolation } from '../../db/errors.js';
 import { books, loans } from '../../db/schema/index.js';

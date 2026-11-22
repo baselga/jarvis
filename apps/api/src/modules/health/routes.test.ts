@@ -1,5 +1,6 @@
 import { HealthResponseSchema } from '@jarvis/schemas';
 import { describe, expect, it, vi } from 'vitest';
+
 import { buildApp } from '../../app.js';
 import type { Db } from '../../db/client.js';
 

@@ -1,5 +1,6 @@
 import { EmailSchema, PasswordSchema } from '@jarvis/schemas';
 import { z } from 'zod';
+
 import { loadConfig } from '../config.js';
 import { createDb } from './client.js';
 import { seedAdmin } from './seed-admin.js';

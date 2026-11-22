@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { verifyPassword } from '../auth/password.js';
 import { createUser, testDb } from '../test/helpers.js';
 import { users } from './schema/index.js';

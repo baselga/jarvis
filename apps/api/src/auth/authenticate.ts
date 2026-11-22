@@ -1,7 +1,8 @@
 import { type AuthUser, ErrorResponseSchema, type Role } from '@jarvis/schemas';
 import type { FastifyReply, FastifyRequest, preHandlerAsyncHookHandler } from 'fastify';
 import fp from 'fastify-plugin';
-import { SESSION_COOKIE, getRequestToken, sessionCookieOptions } from './request-token.js';
+
+import { getRequestToken, SESSION_COOKIE, sessionCookieOptions } from './request-token.js';
 import { validateSession } from './session.js';
 
 declare module 'fastify' {

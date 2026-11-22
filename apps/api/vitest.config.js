@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+
 import { defineConfig } from 'vitest/config';
 
 // Desde el host, `TEST_DATABASE_URL` sale del `.env` raíz. `loadEnvFile` no

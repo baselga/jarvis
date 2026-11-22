@@ -1,9 +1,9 @@
 import cookie from '@fastify/cookie';
 import Fastify, { type FastifyServerOptions } from 'fastify';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
+
 import { authPlugin } from './auth/authenticate.js';
 import type { Db } from './db/client.js';
-import { registerOpenApi } from './openapi.js';
 import { authRoutes } from './modules/auth/routes.js';
 import { authorRoutes } from './modules/authors/routes.js';
 import { bookRoutes } from './modules/books/routes.js';
@@ -13,6 +13,7 @@ import { loanRoutes } from './modules/loans/routes.js';
 import { readingRoutes } from './modules/readings/routes.js';
 import { sagaRoutes } from './modules/sagas/routes.js';
 import { userRoutes } from './modules/users/routes.js';
+import { registerOpenApi } from './openapi.js';
 
 declare module 'fastify' {
   interface FastifyInstance {

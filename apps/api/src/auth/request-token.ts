@@ -1,5 +1,6 @@
 import type { CookieSerializeOptions } from '@fastify/cookie';
 import type { FastifyRequest } from 'fastify';
+
 import { SESSION_TTL_MS } from './session.js';
 
 export const SESSION_COOKIE = 'jarvis_session';

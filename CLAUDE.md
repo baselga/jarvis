@@ -6,7 +6,7 @@ Objetivos, arquitectura y fases completos: `docs/PLAN.md` (léelo solo al empeza
 Estado del proyecto: `docs/fases/fase-N.md` (un resumen por fase terminada).
 Deuda técnica y mejoras pendientes: `docs/deuda.md` (apunta ahí lo que se deja para más adelante).
 Fase activa: 1 (plan: `docs/fases/fase-1-plan.md`)
-Tarea activa: 15 (bloque 1c, cierre de la API: tareas 15–22)
+Tarea activa: ninguna (siguiente: 16)
 
 ## Forma de trabajar
 
@@ -66,7 +66,7 @@ Obligatorios en: autenticación y roles, permisos por endpoint (p. ej. un invita
 - `pnpm format` — Prettier
 - `pnpm -r typecheck` — tipos
 - `pnpm -r test` — tests desde el host (Postgres levantado y `TEST_DATABASE_URL` en `.env`); en el contenedor: `docker compose exec api pnpm --filter @jarvis/api test`. La BD `jarvis_test` se crea y migra sola y se vacía entre tests.
-- `pnpm -r lint` — lint
+- `pnpm -r lint` — lint; `pnpm -r lint --fix` ordena los imports (y corrige lo demás que tenga autofix)
 - `docker compose exec api pnpm --filter @jarvis/api db:seed` — crea el primer admin con `ADMIN_*` del `.env` (no toca uno existente)
 
 Verifica con estos comandos tras cada tarea y muestra solo los errores, no la salida completa.

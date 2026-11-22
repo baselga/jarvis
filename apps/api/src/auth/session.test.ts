@@ -1,13 +1,15 @@
 import { createHash } from 'node:crypto';
+
 import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
+
 import { sessions, users } from '../db/schema/index.js';
 import { createSession as insertSession, createUser, testDb } from '../test/helpers.js';
 import {
-  SESSION_TTL_MS,
   createSession,
   deleteSession,
   hashSessionToken,
+  SESSION_TTL_MS,
   validateSession,
 } from './session.js';
 
