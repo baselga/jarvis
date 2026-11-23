@@ -21,13 +21,14 @@ No hagas commits salvo en el paso 6, si te lo confirmo. Si el `Estado` no es `re
 
 1. **Comprueba** que todas las subtareas y tests de `tarea-N.md` están marcados y que pasan `pnpm format:check` y los comandos de typecheck, lint y test de la sección "Comandos" del `CLAUDE.md` raíz (con `postgres` levantado si los tests usan la BD). Si algo falla, dímelo y para.
 2. **Decide qué documentar.** Lee `tarea-N.md` (decisiones, registro de implementación, revisión) y los archivos que lista el registro, y propónme una lista corta de cambios, solo lo que una sesión futura necesitaría y no puede deducir rápido del código:
-   - `CLAUDE.md` de la app: patrones nuevos (p. ej. "así se hace un CRUD: ver `routes/authors.ts`"), estructura de carpetas, cómo ejecutar algo nuevo. Quita lo que quede obsoleto, como "Pendiente de decidir" ya resuelto.
+   - `CLAUDE.md` de la app: estructura de carpetas, cómo ejecutar algo nuevo y reglas que valgan para cualquier cambio. Un patrón de un tema concreto (p. ej. "así se hace un listado: ver `listBooks`") va en su guía (`apps/api/docs/<tema>.md`); si no encaja en ninguna, crea una y añádela a la tabla del `CLAUDE.md`. Quita lo que quede obsoleto, como "Pendiente de decidir" ya resuelto.
+   - `README.md` de la app: si la tarea añade o cambia endpoints, permisos, scripts o variables de entorno.
    - `CLAUDE.md` raíz: comandos nuevos o reglas que afecten a todo el monorepo.
    - `docs/dominio.md`: si cambiaron entidades, campos, roles o reglas de permisos.
    - `.env.example`: variables nuevas.
    - "Notas" de `fase-F-plan.md` (créala al final si no existe): 1-3 líneas que las siguientes tareas necesiten (helpers reutilizables, patrones de referencia).
    - `docs/deuda.md`: deuda nueva o mejoras que se dejaron fuera (de "Fuera de alcance", mejoras descartadas de la revisión…), con su porqué y la tarea de origen; borra las entradas que esta tarea haya resuelto.
-   Aplícalos cuando te parezcan bien. Mantén los `CLAUDE.md` cortos: patrones y punteros, no explicaciones.
+   Aplícalos cuando te parezcan bien. Mantén los `CLAUDE.md` y las guías cortos: patrones y punteros, no explicaciones (esas van a "Conceptos nuevos" de `tarea-N.md`).
 3. **Marca la tarea** `[x]` en `fase-F-plan.md`. Si durante la tarea cambió algo del plan (decisión, alcance de otra tarea), actualízalo.
 4. **Rellena "Cierre"** en `tarea-N.md`: qué quedó documentado y dónde, y deuda o pendientes para otras tareas. Si durante la implementación aparecieron conceptos de backend que no estaban en "Conceptos nuevos", añádelos allí. Pon `Estado` en `terminada`.
 5. **Libera la tarea activa:** cambia la línea del `CLAUDE.md` raíz a `Tarea activa: ninguna (siguiente: <primera tarea sin [x] del plan>)`, o `Tarea activa: ninguna` si era la última.

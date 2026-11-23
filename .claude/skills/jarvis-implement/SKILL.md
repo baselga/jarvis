@@ -27,9 +27,9 @@ No hagas commits.
 
 ## Pasos
 
-1. **Contexto.** Lee `tarea-N.md` entero, el `CLAUDE.md` de las apps que toques y los archivos de la sección "Archivos". No leas el plan de la fase salvo que la especificación lo cite. Si el `Estado` es `especificada`, ponlo en `en curso`.
+1. **Contexto.** Lee `tarea-N.md` entero, el `CLAUDE.md` de las apps que toques, las guías que cite la especificación (o, si no cita ninguna, las que indique la tabla del `CLAUDE.md` de la app para lo que vas a tocar) y los archivos de la sección "Archivos". No leas el plan de la fase salvo que la especificación lo cite. Si el `Estado` es `especificada`, ponlo en `en curso`.
 2. **Tests primero en lo obligatorio** (auth, roles, permisos, herramientas del asistente): escribe esos tests, comprueba que fallan por el motivo esperado y luego implementa. El resto de tests, al final de la subtarea.
-3. **Implementa en pasos pequeños**, con `pnpm -r typecheck` entre ellos. Sigue los patrones del `CLAUDE.md` de la app.
+3. **Implementa en pasos pequeños**, con `pnpm -r typecheck` entre ellos. Sigue los patrones del `CLAUDE.md` de la app y de esas guías.
    - Si cambias algún `package.json`, reconstruye con `docker compose up -d --build -V`: el contenedor no ve las dependencias nuevas sin ello.
 4. **Si algo no encaja con la especificación** (falta un dato, hay un error en ella, aparece trabajo no previsto): para y pregúntame. Si lo acordamos, actualiza la especificación antes de seguir.
 5. **Verifica** con `pnpm format` y los comandos de typecheck, lint y test de la sección "Comandos" del `CLAUDE.md` raíz. Si los tests usan la BD, comprueba antes con `docker compose ps` que `postgres` está sano (si no, `docker compose up -d`). Muestra solo los errores. Si algo más necesita Docker (migraciones, servicios nuevos), compruébalo también.
