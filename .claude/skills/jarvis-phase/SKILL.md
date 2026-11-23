@@ -38,7 +38,7 @@ Argumentos: `N` (empezar la fase N) o `close N` (cerrar la fase N).
    - Decisiones tomadas y su porqué.
    - Comandos nuevos o cambios en `CLAUDE.md`.
    - Pendientes (la deuda vive en `docs/deuda.md`: compruébalo al día y aquí solo un puntero a lo que afecte a la siguiente fase).
-   - Conceptos de backend aprendidos en la fase, en una lista breve.
+   - Conceptos aprendidos: solo los títulos, con un puntero a `docs/backend.md`. Antes, añade allí los que falten, en su tema y con la tarea de origen; si la fase cambió cómo está hecho el backend (capas, viaje de una petición, decisiones de fondo), actualiza también esas secciones.
    Usa como fuente las secciones "Conceptos nuevos" y "Cierre" de cada `docs/fases/fase-N/tarea-M.md` y las "Notas" del plan, no el código entero.
-3. Cambia las líneas del `CLAUDE.md` raíz a `Fase activa: ninguna (siguiente: N+1)` y `Tarea activa: ninguna`. Actualiza la sección de comandos de `CLAUDE.md` si han cambiado, y el `CLAUDE.md` de cada app tocada si han aparecido convenciones o patrones nuevos (o crea el de una app nueva). Comprueba que `docs/dominio.md` refleja lo construido.
+3. Cambia las líneas del `CLAUDE.md` raíz a `Fase activa: ninguna (siguiente: N+1)` y `Tarea activa: ninguna`. Actualiza la sección de comandos de `CLAUDE.md` si han cambiado, y el `CLAUDE.md` de cada app tocada (y sus guías en `docs/`) si han aparecido convenciones o patrones nuevos (o crea el de una app nueva). Comprueba que `docs/dominio.md`, `docs/api-contrato.md` y el `README.md` de cada app tocada reflejan lo construido.
 4. Propón el mensaje de commit (no lo hagas salvo que te lo pida) y recuérdame hacer `/clear` antes de la siguiente fase.

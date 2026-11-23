@@ -36,7 +36,7 @@ packages/api-client/ Cliente tipado de la API.
 voice/             (fase 6) satélite de voz en Python.
 ```
 
-Hoy solo existen `apps/api` y `packages/schemas`; el resto se crea en su fase. Cada app tiene su propio `CLAUDE.md` con sus convenciones. Glosario del hogar (miembros, roles, entidades): `docs/dominio.md` (desde la fase 1).
+Hoy solo existen `apps/api` y `packages/schemas`; el resto se crea en su fase. Cada app tiene su propio `CLAUDE.md` con sus convenciones. Glosario del hogar (miembros, roles, entidades): `docs/dominio.md` (desde la fase 1). Las apps que consumen la API (web, asistente) la conocen por `docs/api-contrato.md` (auth, errores, listados), no leyendo `apps/api`. Cómo está hecho el backend y por qué: `docs/backend.md` (para el usuario; no hace falta leerlo para programar).
 
 ### Añadir una app o paquete al monorepo
 
