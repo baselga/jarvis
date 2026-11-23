@@ -23,6 +23,7 @@ No hagas commits salvo en el paso 6, si te lo confirmo. Si el `Estado` no es `re
 2. **Decide qué documentar.** Lee `tarea-N.md` (decisiones, registro de implementación, revisión) y los archivos que lista el registro, y propónme una lista corta de cambios, solo lo que una sesión futura necesitaría y no puede deducir rápido del código:
    - `CLAUDE.md` de la app: estructura de carpetas, cómo ejecutar algo nuevo y reglas que valgan para cualquier cambio. Un patrón de un tema concreto (p. ej. "así se hace un listado: ver `listBooks`") va en su guía (`apps/api/docs/<tema>.md`); si no encaja en ninguna, crea una y añádela a la tabla del `CLAUDE.md`. Quita lo que quede obsoleto, como "Pendiente de decidir" ya resuelto.
    - `README.md` de la app: si la tarea añade o cambia endpoints, permisos, scripts o variables de entorno.
+   - `docs/api-contrato.md`: si cambia algo que un cliente de la API debe saber (auth, formato de errores, listados, semántica de `PATCH`, fechas).
    - `CLAUDE.md` raíz: comandos nuevos o reglas que afecten a todo el monorepo.
    - `docs/dominio.md`: si cambiaron entidades, campos, roles o reglas de permisos.
    - `.env.example`: variables nuevas.
