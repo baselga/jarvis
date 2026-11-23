@@ -33,7 +33,7 @@ No escribas código en este paso.
 3. **Contexto mínimo.** Lee:
    - La tarea N, las decisiones y la sección "Notas" (si existe) de `fase-F-plan.md`. Lo que el plan decide manda sobre secciones antiguas de los `CLAUDE.md` (p. ej. "Pendiente de decidir").
    - `docs/dominio.md` si la tarea toca entidades, roles o permisos.
-   - El `CLAUDE.md` de las apps o paquetes que vaya a tocar.
+   - El `CLAUDE.md` de las apps o paquetes que vaya a tocar y, de las guías que indique (p. ej. `apps/api/docs/`), solo las de los temas que toque la tarea. Anota en la especificación qué guías aplican, para que `/jarvis-implement` y `/jarvis-review` lean las mismas.
    - Solo el código necesario para saber qué existe y dónde encaja lo nuevo (rutas, helpers de test, esquemas). Nada más.
 4. **Entrevista.** Pregúntame todas las dudas que cambien lo que hay que construir: comportamiento, casos límite, códigos de error, forma de los datos, decisiones técnicas abiertas.
    - Como mucho 3 preguntas por mensaje, cada una con tu propuesta por defecto y por qué, para que pueda responder "vale".

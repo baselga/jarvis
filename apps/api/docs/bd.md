@@ -1,0 +1,9 @@
+# Base de datos: modelo, migraciones y reglas
+
+Léela si cambias tablas o migraciones, añades reglas en la BD o manejas fechas.
+
+- **Cambiar el modelo:** editar `src/db/schema/` → `pnpm --filter @jarvis/api db:generate` → revisar el SQL de `drizzle/` → se aplica al reiniciar `api` (`docker compose restart api`). Las migraciones ya commiteadas no se editan. El SQL que el esquema no describe (extensiones, datos) va en una migración vacía con `db:generate --custom --name=<x>`, escrita a mano (ver `drizzle/0003_unaccent.sql`). El *watch* de `tsx` en Docker para Mac a veces no ve cambios de código: mismo remedio.
+- **Reglas en la BD además de en Zod:** `check`, índice único parcial (`.where(...)`) e índice único sobre `lower(name)` en `db/schema/library.ts`. Un `ON DELETE RESTRICT` lanza `23001`, no `23503` (ese es de `NO ACTION` o un id inexistente): `isForeignKeyViolation` mira ambos. Los días sin hora son `date` (texto `YYYY-MM-DD`) + `DateSchema`, nunca `timestamp`.
+- **Enums de Postgres desde Zod:** `pgEnum('x', XSchema.enum)` (no `.options`: en Zod 4 no es tupla). Ver `src/db/schema/users.ts`.
+- **Emails:** toda entrada de email usa `EmailSchema` de `@jarvis/schemas` (trim + minúsculas). El login busca el email tal cual; por eso la BD también exige minúsculas (`check users_email_lowercase`): un alta que se salte Zod falla con `23514` en vez de crear un usuario que no puede entrar.
+- **Fecha de hoy:** nunca `CURRENT_DATE` ni `new Date().toISOString().slice(0, 10)` (van en la zona del servidor o en UTC). En rutas, `app.today()` (decorador, hoy en `HOME_TZ`, que llega por `BuildAppOptions.homeTimeZone`); fuera, `todayIn(zona, now)` de `src/dates.ts`. El valor por defecto se pone en la ruta y el servicio recibe la fecha ya resuelta; solo en los `POST` (en un `PATCH`, ausente = no tocar). Los tests fijan el reloj con `vi.setSystemTime(...)` antes de `createSession` y lo restauran con `vi.useRealTimers()`. Ver `modules/loans/routes.ts`.

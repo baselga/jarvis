@@ -29,7 +29,7 @@ Si el `Estado` no es `implementada`, dime qué paso falta y para. Si quedan mejo
    1. **Cumplimiento:** todo lo de "Especificación" y "Tests" está hecho y se comporta así.
    2. **Corrección y seguridad:** bugs, casos límite, permisos comprobados en la API, errores con el código HTTP correcto, datos sensibles (hashes, tokens) que no se filtran en respuestas ni logs, transacciones donde hacen falta.
    3. **Tests:** cubren los casos obligatorios y fallarían si el código se rompiera (no solo comprueban el camino feliz).
-   4. **Convenciones:** patrones del `CLAUDE.md`, tipos desde `packages/schemas`, nada duplicado.
+   4. **Convenciones:** patrones del `CLAUDE.md` de la app y de las guías que apliquen al diff (las que cite la especificación o indique la tabla del `CLAUDE.md`), tipos desde `packages/schemas`, nada duplicado.
    5. **Simplicidad:** código que sobra, abstracciones prematuras, nombres confusos.
    Ejecuta los comandos de typecheck, lint y test de la sección "Comandos" del `CLAUDE.md` raíz (con `postgres` levantado si los tests usan la BD) y anota lo que falle.
 3. **Escribe la sección "Revisión"** de `tarea-N.md`. En una segunda vuelta, conserva las mejoras anteriores aplicadas (`[x]`) y descartadas (con su motivo) y añade las nuevas con números siguientes:
