@@ -1,5 +1,19 @@
 # @jarvis/api
 
+```text
+        ▄▄▄▄
+       ██▀▀██
+        ▀██▀
+ █▀▄  ▄▄▄██▄▄▄  ▄▀█     @jarvis/api
+ █  ▀▀        ▀▀  █
+▄▀                ▀▄    API REST del hogar: usuarios, roles
+█   ▄█         ▄█  █    y los datos de casa (la biblioteca).
+█   ▀▀  ▄  ▄   ▀▀  █
+█        ▀▀        █    Fastify · Zod · Drizzle · PostgreSQL
+ ▀▄              ▄▀
+   ▀▀▄▄▄▄▄▄▄▄▄▄▀▀
+```
+
 API REST del hogar: usuarios, roles y los datos de casa (hoy, la biblioteca). No sabe nada de IA; la web y el asistente la usan igual, cada uno con la sesión de su usuario.
 
 Fastify + Zod para las rutas, Drizzle + PostgreSQL para los datos, Vitest para los tests.
