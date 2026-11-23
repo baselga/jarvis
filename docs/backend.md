@@ -110,6 +110,7 @@ Agrupados por tema. Entre paréntesis, la tarea de la fase 1 donde aparecieron (
 - **`NULLS LAST`** explícito para que la intención se lea (10).
 - **Escapar `%` y `_` en `LIKE`:** no es inyección SQL (va parametrizado), pero darían resultados engañosos (9).
 - **Volatilidad de funciones:** solo se indexan expresiones `IMMUTABLE`; `unaccent` es `STABLE`, por eso la búsqueda sin tildes no usa índice (18).
+- **Códigos de error de Postgres:** `23505` único, `23503`/`23001` clave foránea, `23514` `CHECK`. Se traducen en el servicio y no salen de él (9, 11). Los de conexión (`ECONNREFUSED`, clase `08`, `57P0x`) son otra cosa: no dependen de la petición, y por eso son un 503 y no un 4xx (16).
 - **`TRUNCATE` frente a `DELETE`:** vacía tablas de golpe, reinicia secuencias, es transaccional en Postgres (2, 22).
 
 ### Validación de entrada
